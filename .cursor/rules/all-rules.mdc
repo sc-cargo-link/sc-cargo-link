@@ -4,5 +4,5 @@ globs:
 alwaysApply: true
 ---
 - always make it look modern and pretty.
-- use tailwind and joyUI when required
+- use tailwind and radix-ui when required
 - always make it responsive design.
