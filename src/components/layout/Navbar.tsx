@@ -1,7 +1,14 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Route, Package } from 'lucide-react';
+import { Package, Route } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 const Navbar = () => {
   const location = useLocation();
@@ -17,17 +24,34 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <Link
-              to="/contracts"
-              className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                location.pathname.startsWith('/contracts') 
-                  ? 'text-neon-blue bg-space-medium' 
-                  : 'text-gray-300 hover:text-neon-blue'
-              }`}
-            >
-              <Package className="h-5 w-5 mr-2" />
-              Contracts
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    location.pathname.startsWith('/contracts') 
+                      ? 'text-neon-blue bg-space-medium' 
+                      : 'text-gray-300 hover:text-neon-blue'
+                  }`}
+                >
+                  <Package className="h-5 w-5 mr-2" />
+                  Contracts
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-space-dark border border-neon-blue/20">
+                <DropdownMenuItem asChild>
+                  <Link to="/contracts" className="text-gray-300 hover:text-neon-blue focus:text-neon-blue">
+                    All Contracts
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/contracts/record" className="text-gray-300 hover:text-neon-blue focus:text-neon-blue">
+                    Record Contract
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
             <Link
               to="/routes"
               className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
