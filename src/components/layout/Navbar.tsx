@@ -49,6 +49,11 @@ const Navbar = () => {
                     Record Contract
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/contracts/remote" className="text-gray-300 hover:text-neon-blue focus:text-neon-blue">
+                    Remote Session
+                  </Link>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             

@@ -10,6 +10,7 @@ import Record from "./components/contracts/Record";
 import RoutesPage from "./components/routes/RoutesPage";
 import NotFound from "./pages/NotFound";
 import { DebugProvider } from "./contexts/DebugContext";
+import RemoteSession from './components/contracts/RemoteSession';
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="/" element={<Layout><Dashboard /></Layout>} />
             <Route path="/contracts" element={<Layout><ContractsPage /></Layout>} />
             <Route path="/contracts/record" element={<Layout><Record /></Layout>} />
+            <Route path="/contracts/remote" element={<Layout><RemoteSession /></Layout>} />
             <Route path="/routes" element={<Layout><RoutesPage /></Layout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

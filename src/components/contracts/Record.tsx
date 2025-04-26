@@ -6,26 +6,19 @@ import {
   CollapsibleContent, 
   CollapsibleTrigger 
 } from "@/components/ui/collapsible";
-import { 
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Camera, QrCode, Square, ArrowDown, ArrowUp } from 'lucide-react';
+import { Camera, Square, ArrowDown, ArrowUp, Copy } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import Tesseract from 'tesseract.js';
 import { Peer } from 'peerjs';
 import { cn } from '@/lib/utils';
 import { useDebug } from '@/contexts/DebugContext';
-import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { contractService } from '@/lib/contractService';
 import { Contract } from '@/lib/db';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/use-toast";
+import RecordsTable from '@/components/contracts/RecordsTable';
 
 const Record = () => {
   // States
@@ -322,33 +315,27 @@ const Record = () => {
     }
   };
   
+  useEffect(() => {
+    initPeer();
+  }, []);
+
   // Initialize peer connection
   const initPeer = () => {
     if (!peerRef.current) {
       peerRef.current = new Peer(sessionId);
       
+      peerRef.current.on('open', () => {
+        console.log("Open on record");
+      });
       peerRef.current.on('connection', (conn) => {
-        conn.on('open', () => {
-          console.log("Connected to remote peer");
-          conn.on('data', (data) => {
-            console.log("Received data:", data);
-            // Handle incoming data
-          });
+        console.log("Connection on record");
+        conn.on('data', (data) => {
+          console.log("Received data:", data);
         });
       });
     }
   };
   
-  // Connect to remote peer
-  const connectToPeer = () => {
-    if (!peerRef.current || !connectId) return;
-    
-    const conn = peerRef.current.connect(connectId);
-    conn.on('open', () => {
-      console.log("Connected to peer: " + connectId);
-      conn.send("Hello from " + sessionId);
-    });
-  };
 
   const handleClearRecords = () => {
     setExtractedData([]);
@@ -397,7 +384,6 @@ const Record = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-white">Record Contract</h1>
-          <p className="text-gray-400 mt-1">Document a new hauling contract</p>
         </div>
         <div className="flex items-center space-x-2">
           <Switch id="debug-mode" checked={isDebugEnabled} onCheckedChange={toggleDebug} />
@@ -421,24 +407,46 @@ const Record = () => {
         
         <CollapsibleContent className="space-y-6">
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white">Screen Capture</h3>
-            <div className="flex space-x-2">
-              <Button 
-                onClick={startCapture} 
-                disabled={captureActive}
-                className="bg-neon-blue text-space-dark hover:bg-neon-blue/90"
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                Start Capture
-              </Button>
-              <Button 
-                onClick={stopCapture} 
-                disabled={!captureActive}
-                variant="outline"
-                className="border-neon-blue/50 text-neon-blue hover:bg-neon-blue/10"
-              >
-                Stop Capture
-              </Button>
+            <div className="flex items-center justify-between w-full mb-2">
+              <div className="flex space-x-2">
+                <Button 
+                  onClick={startCapture} 
+                  disabled={captureActive}
+                  className="bg-neon-blue text-space-dark hover:bg-neon-blue/90"
+                >
+                  <Camera className="h-4 w-4 mr-2" />
+                  Start Capture
+                </Button>
+                <Button 
+                  onClick={stopCapture} 
+                  disabled={!captureActive}
+                  variant="outline"
+                  className="border-neon-blue/50 text-neon-blue hover:bg-neon-blue/10"
+                >
+                  Stop Capture
+                </Button>
+              </div>
+              <div className="flex-1 flex justify-end">
+                {/* Session Info */}
+                <div className="space-y-2 flex-1 max-w-xs">
+                  <p className="text-sm font-medium text-gray-400">Your Session ID</p>
+                  <div className="relative">
+                    <Input value={sessionId} readOnly className="bg-space-medium border-neon-blue/20 pr-10" />
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1"
+                      onClick={() => {
+                        navigator.clipboard.writeText(sessionId);
+                        toast({ title: 'Copied!', description: 'Session ID copied to clipboard.' });
+                      }}
+                    >
+                      <Copy className="w-4 h-4 text-neon-blue" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
             
             <div className="relative bg-black/30 rounded-lg overflow-hidden border border-neon-blue/30 w-full aspect-video">
@@ -489,47 +497,6 @@ const Record = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Session Information</h3>
-              <div className="flex items-center space-x-4">
-                <div className="space-y-2 flex-1">
-                  <p className="text-sm font-medium text-gray-400">Your Session ID</p>
-                  <div className="flex space-x-2">
-                    <Input value={sessionId} readOnly className="bg-space-medium border-neon-blue/20" />
-                    <Button onClick={() => setSessionId(nanoid(10))} variant="outline" className="border-neon-blue/50">
-                      Generate New
-                    </Button>
-                  </div>
-                </div>
-                <div className="bg-white p-4 rounded-lg">
-                  <QrCode className="h-24 w-24 text-black" />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Connect to Remote Session</h3>
-              <div className="flex space-x-2">
-                <Input 
-                  value={connectId} 
-                  onChange={(e) => setConnectId(e.target.value)}
-                  placeholder="Enter session ID" 
-                  className="bg-space-medium border-neon-blue/20" 
-                />
-                <Button 
-                  onClick={connectToPeer}
-                  className="bg-neon-blue text-space-dark hover:bg-neon-blue/90"
-                >
-                  Connect
-                </Button>
-              </div>
-              <Button variant="outline" className="w-full border-neon-blue/50 text-neon-blue hover:bg-neon-blue/10">
-                <QrCode className="h-4 w-4 mr-2" />
-                Scan QR Code
-              </Button>
-            </div>
-          </div>
         </CollapsibleContent>
       </Collapsible>
 
@@ -551,85 +518,7 @@ const Record = () => {
           <div className="bg-black/30 rounded-lg p-4 border border-neon-blue/30">
             <h3 className="text-lg font-semibold text-white mb-4">Extracted Information</h3>
             
-            {extractedData.length > 0 ? (
-              <>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-neon-blue">Time</TableHead>
-                        <TableHead className="text-neon-blue">Reward</TableHead>
-                        <TableHead className="text-neon-blue">Objective</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {extractedData.map((data) => (
-                        <TableRow key={data.id}>
-                          <TableCell className="text-gray-300">{data.timestamp}</TableCell>
-                          <TableCell className="text-green-400 font-semibold">
-                            {isDebugEnabled && debugImages[data.id] ? (
-                              <HoverCard>
-                                <HoverCardTrigger asChild>
-                                  <span className="cursor-help underline decoration-dotted">
-                                    {data.reward}
-                                  </span>
-                                </HoverCardTrigger>
-                                <HoverCardContent className="w-fit">
-                                  <img 
-                                    src={debugImages[data.id].reward} 
-                                    alt="Reward Zone" 
-                                    className="border border-green-500"
-                                  />
-                                </HoverCardContent>
-                              </HoverCard>
-                            ) : (
-                              data.reward
-                            )}
-                          </TableCell>
-                          <TableCell className="text-gray-300">
-                            {isDebugEnabled && debugImages[data.id] ? (
-                              <HoverCard>
-                                <HoverCardTrigger asChild>
-                                  <span className="cursor-help underline decoration-dotted">
-                                    {data.objective}
-                                  </span>
-                                </HoverCardTrigger>
-                                <HoverCardContent className="w-fit">
-                                  <img 
-                                    src={debugImages[data.id].objective} 
-                                    alt="Objective Zone" 
-                                    className="border border-blue-500"
-                                  />
-                                </HoverCardContent>
-                              </HoverCard>
-                            ) : (
-                              data.objective
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-                <div className="flex justify-end space-x-4 mt-4">
-                  <Button
-                    variant="outline"
-                    className="border-red-500/50 text-red-500 hover:bg-red-500/10"
-                    onClick={handleClearRecords}
-                  >
-                    Clear Records
-                  </Button>
-                  <Button
-                    className="bg-neon-blue text-space-dark hover:bg-neon-blue/90"
-                    onClick={() => setIsCreateSessionDialogOpen(true)}
-                  >
-                    Create Session
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <p className="text-gray-400 text-center py-8">No data captured yet. Use the capture button to extract information.</p>
-            )}
+            <RecordsTable records={extractedData} debugImages={debugImages} />
           </div>
         </div>
       </div>
