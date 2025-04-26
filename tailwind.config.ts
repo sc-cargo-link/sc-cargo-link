@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,18 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Star Citizen theme colors
+				space: {
+					dark: '#0a192f',
+					medium: '#172a45',
+					light: '#303c55',
+				},
+				neon: {
+					blue: '#64ffda',
+					purple: '#8892b0',
+					cyan: '#00b7ff',
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -84,11 +96,35 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-glow': {
+					'0%, 100%': { 
+						opacity: '0.6',
+						boxShadow: '0 0 5px rgba(100, 255, 218, 0.4)'
+					},
+					'50%': {
+						opacity: '1',
+						boxShadow: '0 0 15px rgba(100, 255, 218, 0.7)' 
+					}
+				},
+				'float': {
+					'0%, 100%': {
+						transform: 'translateY(0)'
+					},
+					'50%': {
+						transform: 'translateY(-8px)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-glow': 'pulse-glow 4s infinite ease-in-out',
+				'float': 'float 5s infinite ease-in-out'
+			},
+			backgroundImage: {
+				'space-gradient': 'linear-gradient(180deg, #0a192f 0%, #172a45 100%)',
+				'holographic': 'linear-gradient(135deg, rgba(100,255,218,0.05) 0%, rgba(0,183,255,0.05) 100%)',
 			}
 		}
 	},
