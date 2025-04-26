@@ -39,6 +39,7 @@ const Record = () => {
   const [startPoint, setStartPoint] = useState({ x: 0, y: 0 });
   const [debugImages, setDebugImages] = useState<{[key: string]: { reward: string; objective: string; }}>({});
   const { isDebugEnabled, toggleDebug } = useDebug();
+  const [videoScale, setVideoScale] = useState({ scaleX: 1, scaleY: 1, offsetX: 0, offsetY: 0 });
   
   // Refs
   const videoRef = useRef(null);
@@ -80,26 +81,108 @@ const Record = () => {
     canvas.style.pointerEvents = 'auto';
   };
 
+  const updateCanvasAndVideoScale = () => {
+    if (!videoRef.current || !zoneCanvasRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = zoneCanvasRef.current;
+    const videoRect = video.getBoundingClientRect();
+    
+    // Set canvas size to match container
+    canvas.width = videoRect.width;
+    canvas.height = videoRect.height;
+
+    // Calculate video scaling
+    const videoAspect = video.videoWidth / video.videoHeight;
+    const containerAspect = canvas.width / canvas.height;
+    
+    let scale = 1;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    if (containerAspect > videoAspect) {
+      // Container is wider than video
+      scale = canvas.height / video.videoHeight;
+      offsetX = (canvas.width - (video.videoWidth * scale)) / 2;
+    } else {
+      // Container is taller than video
+      scale = canvas.width / video.videoWidth;
+      offsetY = (canvas.height - (video.videoHeight * scale)) / 2;
+    }
+
+    setVideoScale({
+      scaleX: scale,
+      scaleY: scale,
+      offsetX,
+      offsetY
+    });
+
+    // Redraw zones
+    const context = canvas.getContext('2d');
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.lineWidth = 2;
+    Object.entries(zones).forEach(([type, zone]) => {
+      context.strokeStyle = type === 'reward' ? '#00ff00' : '#0000ff';
+      context.fillStyle = type === 'reward' ? 'rgba(0, 255, 0, 0.1)' : 'rgba(0, 0, 255, 0.1)';
+      const scaledX = zone.x * scale + offsetX;
+      const scaledY = zone.y * scale + offsetY;
+      const scaledWidth = zone.width * scale;
+      const scaledHeight = zone.height * scale;
+      context.fillRect(scaledX, scaledY, scaledWidth, scaledHeight);
+      context.strokeRect(scaledX, scaledY, scaledWidth, scaledHeight);
+    });
+  };
+
+  useEffect(() => {
+    if (videoRef.current && zoneCanvasRef.current) {
+      const video = videoRef.current;
+      
+      const handleVideoMetadata = () => {
+        updateCanvasAndVideoScale();
+      };
+
+      video.addEventListener('loadedmetadata', handleVideoMetadata);
+      const resizeObserver = new ResizeObserver(updateCanvasAndVideoScale);
+      resizeObserver.observe(video);
+
+      return () => {
+        video.removeEventListener('loadedmetadata', handleVideoMetadata);
+        resizeObserver.disconnect();
+      };
+    }
+  }, [zones]);
+
+  const canvasToVideoCoordinates = (canvasX: number, canvasY: number) => {
+    const { scaleX, scaleY, offsetX, offsetY } = videoScale;
+    return {
+      x: Math.round((canvasX - offsetX) / scaleX),
+      y: Math.round((canvasY - offsetY) / scaleY)
+    };
+  };
+
   const handleMouseDown = (e) => {
-    if (!currentZoneType) return;
+    if (!currentZoneType || !videoRef.current) return;
     
     const canvas = zoneCanvasRef.current;
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
+    const videoCoords = canvasToVideoCoordinates(x, y);
+    setStartPoint(videoCoords);
     setIsDrawing(true);
-    setStartPoint({ x, y });
   };
 
   const handleMouseMove = (e) => {
-    if (!isDrawing || !currentZoneType) return;
+    if (!isDrawing || !currentZoneType || !videoRef.current) return;
     
     const canvas = zoneCanvasRef.current;
     const context = canvas.getContext('2d');
     const rect = canvas.getBoundingClientRect();
     const currentX = e.clientX - rect.left;
     const currentY = e.clientY - rect.top;
+    
+    const currentVideoCoords = canvasToVideoCoordinates(currentX, currentY);
     
     // Clear previous drawing
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -110,33 +193,45 @@ const Record = () => {
       if (type !== currentZoneType) {
         context.strokeStyle = type === 'reward' ? '#00ff00' : '#0000ff';
         context.fillStyle = type === 'reward' ? 'rgba(0, 255, 0, 0.1)' : 'rgba(0, 0, 255, 0.1)';
-        context.fillRect(zone.x, zone.y, zone.width, zone.height);
-        context.strokeRect(zone.x, zone.y, zone.width, zone.height);
+        const { scaleX, scaleY, offsetX, offsetY } = videoScale;
+        const scaledX = zone.x * scaleX + offsetX;
+        const scaledY = zone.y * scaleY + offsetY;
+        const scaledWidth = zone.width * scaleX;
+        const scaledHeight = zone.height * scaleY;
+        context.fillRect(scaledX, scaledY, scaledWidth, scaledHeight);
+        context.strokeRect(scaledX, scaledY, scaledWidth, scaledHeight);
       }
     });
     
     // Draw current zone
     context.strokeStyle = currentZoneType === 'reward' ? '#00ff00' : '#0000ff';
     context.fillStyle = currentZoneType === 'reward' ? 'rgba(0, 255, 0, 0.1)' : 'rgba(0, 0, 255, 0.1)';
-    const width = currentX - startPoint.x;
-    const height = currentY - startPoint.y;
-    context.fillRect(startPoint.x, startPoint.y, width, height);
-    context.strokeRect(startPoint.x, startPoint.y, width, height);
+    const { scaleX, scaleY, offsetX, offsetY } = videoScale;
+    const width = currentVideoCoords.x - startPoint.x;
+    const height = currentVideoCoords.y - startPoint.y;
+    const scaledX = startPoint.x * scaleX + offsetX;
+    const scaledY = startPoint.y * scaleY + offsetY;
+    const scaledWidth = width * scaleX;
+    const scaledHeight = height * scaleY;
+    context.fillRect(scaledX, scaledY, scaledWidth, scaledHeight);
+    context.strokeRect(scaledX, scaledY, scaledWidth, scaledHeight);
   };
 
   const handleMouseUp = (e) => {
-    if (!isDrawing || !currentZoneType) return;
+    if (!isDrawing || !currentZoneType || !videoRef.current) return;
     
     const canvas = zoneCanvasRef.current;
     const rect = canvas.getBoundingClientRect();
     const endX = e.clientX - rect.left;
     const endY = e.clientY - rect.top;
     
+    const endVideoCoords = canvasToVideoCoordinates(endX, endY);
+    
     const newZone = {
-      x: Math.min(startPoint.x, endX),
-      y: Math.min(startPoint.y, endY),
-      width: Math.abs(endX - startPoint.x),
-      height: Math.abs(endY - startPoint.y)
+      x: Math.min(startPoint.x, endVideoCoords.x),
+      y: Math.min(startPoint.y, endVideoCoords.y),
+      width: Math.abs(endVideoCoords.x - startPoint.x),
+      height: Math.abs(endVideoCoords.y - startPoint.y)
     };
     
     setZones(prev => ({
@@ -146,37 +241,7 @@ const Record = () => {
     
     setIsDrawing(false);
     setCurrentZoneType(null);
-    canvas.style.pointerEvents = 'none';
   };
-
-  useEffect(() => {
-    if (zoneCanvasRef.current && videoRef.current) {
-      const canvas = zoneCanvasRef.current;
-      const video = videoRef.current;
-      
-      const updateCanvasSize = () => {
-        const rect = video.getBoundingClientRect();
-        canvas.width = rect.width;
-        canvas.height = rect.height;
-        
-        // Redraw zones after resize
-        const context = canvas.getContext('2d');
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        context.lineWidth = 2;
-        Object.entries(zones).forEach(([type, zone]) => {
-          context.strokeStyle = type === 'reward' ? '#00ff00' : '#0000ff';
-          context.fillStyle = type === 'reward' ? 'rgba(0, 255, 0, 0.1)' : 'rgba(0, 0, 255, 0.1)';
-          context.fillRect(zone.x, zone.y, zone.width, zone.height);
-          context.strokeRect(zone.x, zone.y, zone.width, zone.height);
-        });
-      };
-      
-      updateCanvasSize();
-      const resizeObserver = new ResizeObserver(updateCanvasSize);
-      resizeObserver.observe(video);
-      return () => resizeObserver.disconnect();
-    }
-  }, [zones]);
 
   // Capture the current screen
   const captureScreen = async () => {
