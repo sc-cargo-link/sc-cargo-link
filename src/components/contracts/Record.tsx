@@ -300,6 +300,18 @@ const Record = () => {
         Tesseract.recognize(rewardCanvas.toDataURL(), 'eng'),
         Tesseract.recognize(objectiveCanvas.toDataURL(), 'eng')
       ]);
+      const id = nanoid(5);
+      if (isDebugEnabled) {
+        setDebugImages(prev => {
+          return {
+            ...prev,
+            [id]: {
+              reward: rewardCanvas.toDataURL(),
+              objective: objectiveCanvas.toDataURL()
+            }
+          };
+        });
+      }
 
       if (rewardText.data.text.trim() === '') {
         if (conn.current) {
@@ -316,19 +328,6 @@ const Record = () => {
         return;
       }
       setErrorMessage('');
-      const id = nanoid(5);
-      
-      if (isDebugEnabled) {
-        setDebugImages(prev => ({
-          ...prev,
-          [id]: {
-            reward: rewardCanvas.toDataURL(),
-            objective: objectiveCanvas.toDataURL()
-          }
-        }));
-      }
-
-      // Add to extracted data
       setExtractedData(prevData => [
         ...prevData, 
         { 
@@ -562,28 +561,58 @@ const Record = () => {
         </CollapsibleContent>
       </Collapsible>
 
+      {isDebugEnabled && (
+        (() => {
+          const lastEntry = Object.entries(debugImages).at(-1);
+          if (!lastEntry) return null;
+          const [id, images] = lastEntry;
+          return (
+            <div id="debug-container" className="bg-black/40 border border-neon-blue/30 rounded-lg p-4 my-6 flex flex-col items-center max-w-md mx-auto">
+              <div className="mb-2 text-neon-blue font-semibold">{id}</div>
+              <div className="flex flex-col gap-4 w-full">
+                <div className="flex flex-col items-center">
+                  <span className="text-xs text-green-400 mb-1">Reward</span>
+                  <img src={images.reward} alt={`Reward debug ${id}`} className="rounded border border-green-400 max-w-full max-h-40 object-contain" />
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-xs text-blue-400 mb-1">Objective</span>
+                  <img src={images.objective} alt={`Objective debug ${id}`} className="rounded border border-blue-400 max-w-full max-h-40 object-contain" />
+                </div>
+              </div>
+            </div>
+          );
+        })()
+      )}
+
       <div className="holographic-panel rounded-lg p-6 border border-neon-blue/20 space-y-4">
         <h2 className="text-xl font-bold text-neon-blue">Record</h2>
         
         <div className="space-y-4">
-          <Button 
-            onClick={captureScreen}
-            disabled={!captureActive}
-            className="bg-red-600 hover:bg-red-700"
-          >
-            <Camera className="h-4 w-4 mr-2" />
-            Capture Current Screen
-          </Button>
+          <div className="flex gap-2 justify-between items-center">
+            <Button 
+              onClick={captureScreen}
+              disabled={!captureActive}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <Camera className="h-4 w-4 mr-2" />
+              Capture Current Screen
+            </Button>
+            <Button
+              onClick={handleClearRecords}
+              variant="outline"
+              className="border-neon-blue/50 text-neon-blue hover:bg-neon-blue/10 ml-auto"
+              disabled={extractedData.length === 0 && Object.keys(debugImages).length === 0}
+            >
+              Clear
+            </Button>
+          </div>
           <div id="error-message" className="text-red-500">
             {errorMessage}
           </div>
           <canvas ref={canvasRef} className="hidden" />
           
-          <div className="bg-black/30 rounded-lg p-4 border border-neon-blue/30">
-            <h3 className="text-lg font-semibold text-white mb-4">Extracted Information</h3>
             
             <RecordsTable records={extractedData} debugImages={debugImages} />
-          </div>
         </div>
       </div>
 
@@ -623,3 +652,4 @@ const Record = () => {
 };
 
 export default Record;
+
