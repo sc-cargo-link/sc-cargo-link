@@ -1,4 +1,4 @@
-import React, { useEffect, useImperativeHandle, forwardRef } from 'react';
+import React, { useEffect, useImperativeHandle, forwardRef, useRef } from 'react';
 import { nanoid } from 'nanoid';
 import Tesseract from 'tesseract.js';
 import { Peer } from 'peerjs';
@@ -50,8 +50,8 @@ interface CapturePeerHandlerProps {
   isDebugEnabled: boolean;
   extractedDataRef: React.RefObject<any>;
   debugImagesRef: React.RefObject<any>;
-  connRef: React.RefObject<any>;
-  peerRef: React.RefObject<any>;
+  connRef: React.MutableRefObject<any>;
+  peerRef: React.MutableRefObject<any>;
 }
 
 const CapturePeerHandler = forwardRef<CapturePeerHandlerRef, CapturePeerHandlerProps>(({
@@ -68,9 +68,54 @@ const CapturePeerHandler = forwardRef<CapturePeerHandlerRef, CapturePeerHandlerP
   connRef,
   peerRef
 }, ref) => {
-  // Capture the current screen
+  const schedulerRef = useRef<any>(null);
+  const workersRef = useRef<any[]>([]);
+  const jobCountRef = useRef<number>(0);
+  const reinitPromiseRef = useRef<Promise<void> | null>(null);
+
+  const initScheduler = async () => {
+    const scheduler = Tesseract.createScheduler();
+    const workers = [];
+    for (let i = 0; i < 2; i++) {
+      const worker = await Tesseract.createWorker('eng');
+      await worker.reinitialize('eng');
+      scheduler.addWorker(worker);
+      workers.push(worker);
+    }
+    schedulerRef.current = scheduler;
+    workersRef.current = workers;
+    jobCountRef.current = 0;
+  };
+
+  const terminateScheduler = async () => {
+    console.log("terminateScheduler");
+    if (schedulerRef.current) {
+      await schedulerRef.current.terminate();
+      schedulerRef.current = null;
+    }
+    if (workersRef.current.length > 0) {
+      workersRef.current = [];
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+    reinitPromiseRef.current = initScheduler();
+    return () => {
+      isMounted = false;
+      terminateScheduler();
+    };
+  }, []);
+
+  const ensureScheduler = async () => {
+    if (reinitPromiseRef.current) {
+      await reinitPromiseRef.current;
+    }
+  };
+
   const captureScreen = async () => {
-    if (!videoRef.current || !canvasRef.current) return;
+    await ensureScheduler();
+    if (!videoRef.current || !canvasRef.current || !schedulerRef.current) return;
     const canvas = canvasRef.current;
     const video = videoRef.current;
     const context = canvas.getContext('2d');
@@ -101,10 +146,22 @@ const CapturePeerHandler = forwardRef<CapturePeerHandlerRef, CapturePeerHandlerP
     sharpenCanvas(rewardCanvas);
     sharpenCanvas(objectiveCanvas);
     try {
-      // Extract text using Tesseract
+      // Restart scheduler after 100 jobs
+      jobCountRef.current += 2;
+      if (jobCountRef.current > 100) {
+        if (!reinitPromiseRef.current) {
+          reinitPromiseRef.current = (async () => {
+            await terminateScheduler();
+            await initScheduler();
+            reinitPromiseRef.current = null;
+          })();
+        }
+        await reinitPromiseRef.current;
+      }
+      const scheduler = schedulerRef.current;
       const [rewardText, objectiveText] = await Promise.all([
-        Tesseract.recognize(rewardCanvas.toDataURL(), 'eng'),
-        Tesseract.recognize(objectiveCanvas.toDataURL(), 'eng')
+        scheduler.addJob('recognize', rewardCanvas.toDataURL(), 'eng'),
+        scheduler.addJob('recognize', objectiveCanvas.toDataURL(), 'eng')
       ]);
       const id = nanoid(5);
       if (isDebugEnabled) {
@@ -163,7 +220,7 @@ const CapturePeerHandler = forwardRef<CapturePeerHandlerRef, CapturePeerHandlerP
         records: extractedDataRef.current,
         debugImages: debugImagesRef.current
       });
-    }, 1000);
+    }, 300);
     conn.on('close', () => {
       if (interval) clearInterval(interval);
     });

@@ -77,7 +77,6 @@ const RemoteSession = () => {
       setLoading(false);
     });
     connection.on('data', (data) => {
-      console.log("data", data);
       if (data.type === 'records') {
         setRecords(data.records);
         setDebugImages(data.debugImages || {});

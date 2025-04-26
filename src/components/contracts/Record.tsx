@@ -33,10 +33,10 @@ const Record = () => {
   });
 
   // Refs
-  const connRef = useRef(null);
+  const connRef = React.useRef<any>(null) as React.MutableRefObject<any>;
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const peerRef = useRef(null);
+  const peerRef = React.useRef<any>(null) as React.MutableRefObject<any>;
   const extractedDataRef = useRef(extractedData);
   const debugImagesRef = useRef(debugImages);
   const zonesRef = useRef(zones);
