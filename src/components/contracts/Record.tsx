@@ -41,7 +41,7 @@ const Record = () => {
   const startCapture = async () => {
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({ 
-        video: { cursor: "always" },
+        video: true, // Remove the cursor property as it's not supported
         audio: false
       });
       
