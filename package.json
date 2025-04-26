@@ -49,6 +49,7 @@
     "dexie-react-hooks": "^1.1.7",
     "embla-carousel-react": "^8.3.0",
     "html5-qrcode": "^2.3.8",
+    "human-id": "^4.1.1",
     "input-otp": "^1.2.4",
     "jsqr": "^1.4.0",
     "lucide-react": "^0.462.0",

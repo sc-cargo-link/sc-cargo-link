@@ -21,11 +21,15 @@ import { toast } from "@/components/ui/use-toast";
 import RecordsTable from '@/components/contracts/RecordsTable';
 import QRCode from 'react-qr-code';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import humanId from 'human-id';
 
 const Record = () => {
   // States
   const [isSetupOpen, setIsSetupOpen] = useState(true);
-  const [sessionId, setSessionId] = useState(nanoid(10));
+  const [sessionId, setSessionId] = useState(humanId({
+    capitalize: false,
+    separator: '-',
+  }));
   const [captureActive, setCaptureActive] = useState(false);
   const [connectId, setConnectId] = useState('');
   const [extractedData, setExtractedData] = useState([]);

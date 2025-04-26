@@ -90,15 +90,15 @@ const RemoteSession = () => {
     });
   };
 
-  const handleConnect = (id = null) => {
-    id = id || sessionId;
-    console.log("handleConnect", id);
-    if (!id) return;
+  const handleConnect = (id = undefined) => {
+    const connectId = id || sessionId;
+    console.log("handleConnect", connectId);
+    if (!connectId) return;
     setLoading(true);
     if (!peerRef.current || peerRef.current.disconnected) {
       peerRef.current = new Peer();
       peerRef.current.on('open', () => {
-        createAndBindConnection(peerRef.current, id);
+        createAndBindConnection(peerRef.current, connectId);
       });
       peerRef.current.on('disconnected', () => {
         setConnected(false);
@@ -113,7 +113,7 @@ const RemoteSession = () => {
         setLoading(false);
       });
     } else {
-      createAndBindConnection(peerRef.current, id);
+      createAndBindConnection(peerRef.current, connectId);
     }
   };
 
@@ -134,7 +134,7 @@ const RemoteSession = () => {
           placeholder="Enter session ID"
           className="bg-space-medium border-neon-blue/20"
         />
-        <Button onClick={handleConnect} className="bg-neon-blue text-space-dark hover:bg-neon-blue/90" disabled={loading || connected}>
+        <Button onClick={() => handleConnect()} className="bg-neon-blue text-space-dark hover:bg-neon-blue/90" disabled={loading || connected}>
           {loading ? (
             <svg className="animate-spin h-4 w-4 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
