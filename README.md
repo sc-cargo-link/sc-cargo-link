@@ -64,6 +64,25 @@ This project is built with:
 
 Simply open [Lovable](https://lovable.dev/projects/862ae6d9-9a65-49a5-ac07-e646a648b9b7) and click on Share -> Publish.
 
+### Deploy to GitHub Pages
+
+1. Set the correct `base` in `vite.config.ts`:
+   ```js
+   base: '/star-citizen-haul-planner/', // use your repo name
+   ```
+2. Install gh-pages (already in devDependencies):
+   ```sh
+   npm install
+   ```
+3. Deploy:
+   ```sh
+   npm run deploy
+   ```
+4. Your site will be available at:
+   ```
+   https://<your-username>.github.io/star-citizen-haul-planner/
+   ```
+
 ## Can I connect a custom domain to my Lovable project?
 
 Yes, you can!
