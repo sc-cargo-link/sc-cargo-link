@@ -39,12 +39,15 @@ const Record = () => {
   const [videoScale, setVideoScale] = useState({ scaleX: 1, scaleY: 1, offsetX: 0, offsetY: 0 });
   const [isCreateSessionDialogOpen, setIsCreateSessionDialogOpen] = useState(false);
   const [sessionName, setSessionName] = useState('');
-  
+  const [errorMessage, setErrorMessage] = useState('');
+  const conn = useRef(null);
   // Refs
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const zoneCanvasRef = useRef(null);
   const peerRef = useRef(null);
+  const extractedDataRef = useRef(extractedData);
+  const debugImagesRef = useRef(debugImages);
   
   // Start screen capture
   const startCapture = async () => {
@@ -244,6 +247,16 @@ const Record = () => {
 
   // Capture the current screen
   const captureScreen = async () => {
+    // setExtractedData(prevData => [
+    //   ...prevData, 
+    //   { 
+    //     id: nanoid(5),
+    //     timestamp: new Date().toLocaleString(),
+    //     reward: 'test',
+    //     objective: 'test'
+    //   }
+    // ]);
+    // return ;
     if (!videoRef.current || !canvasRef.current) return;
     
     const canvas = canvasRef.current;
@@ -288,6 +301,21 @@ const Record = () => {
         Tesseract.recognize(objectiveCanvas.toDataURL(), 'eng')
       ]);
 
+      if (rewardText.data.text.trim() === '') {
+        if (conn.current) {
+          conn.current.send({ type: 'error', message: 'No text found in the reward zone' });
+        }
+        setErrorMessage('No text found in the reward zone');
+        return;
+      }
+      if (objectiveText.data.text.trim() === '') {
+        if (conn.current) {
+          conn.current.send({ type: 'error', message: 'No text found in the objective zone' });
+        }
+        setErrorMessage('No text found in the objective zone');
+        return;
+      }
+      setErrorMessage('');
       const id = nanoid(5);
       
       if (isDebugEnabled) {
@@ -312,12 +340,39 @@ const Record = () => {
       ]);
     } catch (error) {
       console.error('Error extracting text:', error);
+      setErrorMessage(error.message);
     }
   };
   
   useEffect(() => {
     initPeer();
   }, []);
+
+  const handleConnection = (conn) => {
+    conn.current = conn;
+    let interval: NodeJS.Timeout | null = null;
+    console.log("Connection on record");
+    // Only set up the handler once
+    conn.on('data', (data) => {
+      if (data.type === 'capture-request') {
+        captureScreen();
+      }
+    });
+    // Send data every 1 second
+    interval = setInterval(() => {
+      conn.send({
+        type: 'records',
+        records: extractedDataRef.current,
+        debugImages: debugImagesRef.current
+      });
+    }, 1000);
+    conn.on('close', () => {
+      if (interval) clearInterval(interval);
+    });
+    conn.on('error', (error) => {
+      setErrorMessage(error.message);
+    });
+  };
 
   // Initialize peer connection
   const initPeer = () => {
@@ -326,6 +381,7 @@ const Record = () => {
       
       peerRef.current.on('open', () => {
         console.log("Open on record");
+        setErrorMessage('');
       });
       peerRef.current.on('connection', (conn) => {
         console.log("Connection on record");
@@ -333,10 +389,13 @@ const Record = () => {
           console.log("Received data:", data);
         });
       });
+      peerRef.current.on('connection', handleConnection);
+      peerRef.current.on('error', (error) => {
+        setErrorMessage(error.message);
+      });
     }
   };
   
-
   const handleClearRecords = () => {
     setExtractedData([]);
     setDebugImages({});
@@ -378,6 +437,9 @@ const Record = () => {
       });
     }
   };
+
+  useEffect(() => { extractedDataRef.current = extractedData; }, [extractedData]);
+  useEffect(() => { debugImagesRef.current = debugImages; }, [debugImages]);
 
   return (
     <div className="space-y-6">
@@ -512,7 +574,9 @@ const Record = () => {
             <Camera className="h-4 w-4 mr-2" />
             Capture Current Screen
           </Button>
-          
+          <div id="error-message" className="text-red-500">
+            {errorMessage}
+          </div>
           <canvas ref={canvasRef} className="hidden" />
           
           <div className="bg-black/30 rounded-lg p-4 border border-neon-blue/30">

@@ -12,6 +12,7 @@ const RemoteSession = () => {
   const [records, setRecords] = useState([]);
   const [debugImages, setDebugImages] = useState({});
   const peerRef = useRef(null);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // QR code scanning logic placeholder
   const handleScanQR = () => {
@@ -21,12 +22,13 @@ const RemoteSession = () => {
   const handleConnect = () => {
     if (!sessionId) return;
     if (!peerRef.current) peerRef.current = new Peer();
-    if (conn) conn.close();
+    // if (conn) conn.close();
     const connection = peerRef.current.connect(sessionId, { reliable: true });
     setConn(connection);
     connection.on('open', () => {
       console.log("Open on remote");
       setConnected(true);
+      setErrorMessage('');
     });
     connection.on('data', (data) => {
       console.log(data);
@@ -34,11 +36,32 @@ const RemoteSession = () => {
         setRecords(data.records);
         setDebugImages(data.debugImages || {});
       }
+      if (data.type === 'error') {
+        setErrorMessage(data.message);
+      }
+    });
+    connection.on('close', () => {
+      console.log("Close on remote");
+      setConnected(false);
+    });
+    peerRef.current.on('disconnected', () => {
+      console.log("Disconnected on remote");
+      setConnected(false);
+    });
+    peerRef.current.on('error', (error) => {
+      console.log("Error on remote");
+      console.error(error);
+      setErrorMessage(error.message);
+    });
+    peerRef.current.on('close', (call) => {
+      console.log("Close on remote");
+      setConnected(false);
     });
   };
 
   const handleCapture = () => {
     if (conn && connected) {
+      console.log("Sending capture request");
       conn.send({ type: 'capture-request' });
     }
   };
@@ -69,6 +92,9 @@ const RemoteSession = () => {
         <Camera className="h-4 w-4 mr-2" />
         Capture
       </Button>
+      <div id="error-message" className="text-red-500">
+        {errorMessage}
+      </div>
       <RecordsTable records={records} debugImages={debugImages} />
     </div>
   );
