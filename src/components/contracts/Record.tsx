@@ -275,7 +275,6 @@ const Record = () => {
     const rewardContext = rewardCanvas.getContext('2d');
     rewardCanvas.width = zones.reward.width;
     rewardCanvas.height = zones.reward.height;
-    
     rewardContext.drawImage(
       video,
       zones.reward.x, zones.reward.y, zones.reward.width, zones.reward.height,
@@ -287,12 +286,49 @@ const Record = () => {
     const objectiveContext = objectiveCanvas.getContext('2d');
     objectiveCanvas.width = zones.objective.width;
     objectiveCanvas.height = zones.objective.height;
-    
     objectiveContext.drawImage(
       video,
       zones.objective.x, zones.objective.y, zones.objective.width, zones.objective.height,
       0, 0, zones.objective.width, zones.objective.height
     );
+    
+    // Sharpening kernel
+    function sharpenCanvas(canvas) {
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width;
+      const height = canvas.height;
+      const imageData = ctx.getImageData(0, 0, width, height);
+      const data = imageData.data;
+      const copy = new Uint8ClampedArray(data);
+      // Sharpen kernel
+      const kernel = [
+        0, -1,  0,
+       -1,  5, -1,
+        0, -1,  0
+      ];
+      const kSize = 3;
+      for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+          for (let c = 0; c < 3; c++) {
+            let i = (y * width + x) * 4 + c;
+            let sum = 0;
+            let ki = 0;
+            for (let ky = -1; ky <= 1; ky++) {
+              for (let kx = -1; kx <= 1; kx++) {
+                let ni = ((y + ky) * width + (x + kx)) * 4 + c;
+                sum += copy[ni] * kernel[ki++];
+              }
+            }
+            data[i] = Math.min(255, Math.max(0, sum));
+          }
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    // Sharpen reward and objective canvases
+    sharpenCanvas(rewardCanvas);
+    sharpenCanvas(objectiveCanvas);
     
     try {
       // Extract text using Tesseract
@@ -561,28 +597,61 @@ const Record = () => {
         </CollapsibleContent>
       </Collapsible>
 
-      {isDebugEnabled && (
-        (() => {
-          const lastEntry = Object.entries(debugImages).at(-1);
-          if (!lastEntry) return null;
-          const [id, images] = lastEntry;
-          return (
-            <div id="debug-container" className="bg-black/40 border border-neon-blue/30 rounded-lg p-4 my-6 flex flex-col items-center max-w-md mx-auto">
-              <div className="mb-2 text-neon-blue font-semibold">{id}</div>
-              <div className="flex flex-col gap-4 w-full">
-                <div className="flex flex-col items-center">
-                  <span className="text-xs text-green-400 mb-1">Reward</span>
-                  <img src={images.reward} alt={`Reward debug ${id}`} className="rounded border border-green-400 max-w-full max-h-40 object-contain" />
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-xs text-blue-400 mb-1">Objective</span>
-                  <img src={images.objective} alt={`Objective debug ${id}`} className="rounded border border-blue-400 max-w-full max-h-40 object-contain" />
-                </div>
-              </div>
+      {isDebugEnabled && (() => {
+        const lastEntry = Object.entries(debugImages).at(-1);
+        if (!lastEntry) return (
+          <div id="canvas-container" className="flex flex-col items-center my-6 text-gray-400">No debug images yet.</div>
+        );
+        const [id, images] = lastEntry;
+        return (
+          <div id="canvas-container" className="flex flex-col md:flex-row gap-6 items-center my-6">
+            <div className="flex flex-col items-center">
+              <span className="text-xs text-green-400 mb-1">Reward Zone (Canvas)</span>
+              <canvas
+                width={1}
+                height={1}
+                ref={el => {
+                  if (el && images.reward) {
+                    const img = new window.Image();
+                    img.onload = () => {
+                      el.width = img.width;
+                      el.height = img.height;
+                      const ctx = el.getContext('2d');
+                      ctx.clearRect(0, 0, el.width, el.height);
+                      ctx.drawImage(img, 0, 0);
+                    };
+                    img.src = images.reward;
+                  }
+                }}
+                className="border border-green-400 rounded-lg max-w-xs h-auto bg-black shadow-lg"
+                style={{ display: 'block' }}
+              />
             </div>
-          );
-        })()
-      )}
+            <div className="flex flex-col items-center">
+              <span className="text-xs text-blue-400 mb-1">Objective Zone (Canvas)</span>
+              <canvas
+                width={1}
+                height={1}
+                ref={el => {
+                  if (el && images.objective) {
+                    const img = new window.Image();
+                    img.onload = () => {
+                      el.width = img.width;
+                      el.height = img.height;
+                      const ctx = el.getContext('2d');
+                      ctx.clearRect(0, 0, el.width, el.height);
+                      ctx.drawImage(img, 0, 0);
+                    };
+                    img.src = images.objective;
+                  }
+                }}
+                className="border border-blue-400 rounded-lg max-w-xs h-auto bg-black shadow-lg"
+                style={{ display: 'block' }}
+              />
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="holographic-panel rounded-lg p-6 border border-neon-blue/20 space-y-4">
         <h2 className="text-xl font-bold text-neon-blue">Record</h2>
