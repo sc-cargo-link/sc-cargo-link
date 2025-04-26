@@ -1,5 +1,4 @@
-
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -18,6 +17,11 @@ import { Camera, QrCode, Square, ArrowDown, ArrowUp } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import Tesseract from 'tesseract.js';
 import { Peer } from 'peerjs';
+import { cn } from '@/lib/utils';
+import { useDebug } from '@/contexts/DebugContext';
+import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const Record = () => {
   // States
@@ -30,6 +34,11 @@ const Record = () => {
     reward: { x: 0, y: 0, width: 100, height: 50 },
     objective: { x: 0, y: 0, width: 100, height: 50 }
   });
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [currentZoneType, setCurrentZoneType] = useState(null);
+  const [startPoint, setStartPoint] = useState({ x: 0, y: 0 });
+  const [debugImages, setDebugImages] = useState<{[key: string]: { reward: string; objective: string; }}>({});
+  const { isDebugEnabled, toggleDebug } = useDebug();
   
   // Refs
   const videoRef = useRef(null);
@@ -64,21 +73,111 @@ const Record = () => {
     }
   };
   
-  // Set zone for capture
-  const setZone = (type) => {
-    // In a real implementation, we'd draw on zoneCanvasRef and capture coordinates
-    // For now we just simulate with random zones
+  // Drawing functions
+  const startDrawing = (type) => {
+    setCurrentZoneType(type);
+    const canvas = zoneCanvasRef.current;
+    canvas.style.pointerEvents = 'auto';
+  };
+
+  const handleMouseDown = (e) => {
+    if (!currentZoneType) return;
+    
+    const canvas = zoneCanvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    setIsDrawing(true);
+    setStartPoint({ x, y });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDrawing || !currentZoneType) return;
+    
+    const canvas = zoneCanvasRef.current;
+    const context = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    const currentX = e.clientX - rect.left;
+    const currentY = e.clientY - rect.top;
+    
+    // Clear previous drawing
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.lineWidth = 2;
+    
+    // Draw all existing zones
+    Object.entries(zones).forEach(([type, zone]) => {
+      if (type !== currentZoneType) {
+        context.strokeStyle = type === 'reward' ? '#00ff00' : '#0000ff';
+        context.fillStyle = type === 'reward' ? 'rgba(0, 255, 0, 0.1)' : 'rgba(0, 0, 255, 0.1)';
+        context.fillRect(zone.x, zone.y, zone.width, zone.height);
+        context.strokeRect(zone.x, zone.y, zone.width, zone.height);
+      }
+    });
+    
+    // Draw current zone
+    context.strokeStyle = currentZoneType === 'reward' ? '#00ff00' : '#0000ff';
+    context.fillStyle = currentZoneType === 'reward' ? 'rgba(0, 255, 0, 0.1)' : 'rgba(0, 0, 255, 0.1)';
+    const width = currentX - startPoint.x;
+    const height = currentY - startPoint.y;
+    context.fillRect(startPoint.x, startPoint.y, width, height);
+    context.strokeRect(startPoint.x, startPoint.y, width, height);
+  };
+
+  const handleMouseUp = (e) => {
+    if (!isDrawing || !currentZoneType) return;
+    
+    const canvas = zoneCanvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const endX = e.clientX - rect.left;
+    const endY = e.clientY - rect.top;
+    
+    const newZone = {
+      x: Math.min(startPoint.x, endX),
+      y: Math.min(startPoint.y, endY),
+      width: Math.abs(endX - startPoint.x),
+      height: Math.abs(endY - startPoint.y)
+    };
+    
     setZones(prev => ({
       ...prev,
-      [type]: {
-        x: Math.floor(Math.random() * 200),
-        y: Math.floor(Math.random() * 200),
-        width: 100 + Math.floor(Math.random() * 100),
-        height: 50 + Math.floor(Math.random() * 50)
-      }
+      [currentZoneType]: newZone
     }));
+    
+    setIsDrawing(false);
+    setCurrentZoneType(null);
+    canvas.style.pointerEvents = 'none';
   };
-  
+
+  useEffect(() => {
+    if (zoneCanvasRef.current && videoRef.current) {
+      const canvas = zoneCanvasRef.current;
+      const video = videoRef.current;
+      
+      const updateCanvasSize = () => {
+        const rect = video.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        
+        // Redraw zones after resize
+        const context = canvas.getContext('2d');
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.lineWidth = 2;
+        Object.entries(zones).forEach(([type, zone]) => {
+          context.strokeStyle = type === 'reward' ? '#00ff00' : '#0000ff';
+          context.fillStyle = type === 'reward' ? 'rgba(0, 255, 0, 0.1)' : 'rgba(0, 0, 255, 0.1)';
+          context.fillRect(zone.x, zone.y, zone.width, zone.height);
+          context.strokeRect(zone.x, zone.y, zone.width, zone.height);
+        });
+      };
+      
+      updateCanvasSize();
+      const resizeObserver = new ResizeObserver(updateCanvasSize);
+      resizeObserver.observe(video);
+      return () => resizeObserver.disconnect();
+    }
+  }, [zones]);
+
   // Capture the current screen
   const captureScreen = async () => {
     if (!videoRef.current || !canvasRef.current) return;
@@ -106,7 +205,7 @@ const Record = () => {
       0, 0, zones.reward.width, zones.reward.height
     );
     
-    // Extract text from objective zone similarly
+    // Extract text from objective zone
     const objectiveCanvas = document.createElement('canvas');
     const objectiveContext = objectiveCanvas.getContext('2d');
     objectiveCanvas.width = zones.objective.width;
@@ -118,23 +217,38 @@ const Record = () => {
       0, 0, zones.objective.width, zones.objective.height
     );
     
-    // In a full implementation, we would use Tesseract here to extract the text
-    // For now, let's simulate with sample data
-    const sampleData = {
-      reward: "10,000 aUEC",
-      objective: "Transport cargo to Hurston"
-    };
-    
-    // Add to extracted data
-    setExtractedData(prevData => [
-      ...prevData, 
-      { 
-        id: nanoid(5),
-        timestamp: new Date().toLocaleString(),
-        reward: sampleData.reward,
-        objective: sampleData.objective
+    try {
+      // Extract text using Tesseract
+      const [rewardText, objectiveText] = await Promise.all([
+        Tesseract.recognize(rewardCanvas.toDataURL(), 'eng'),
+        Tesseract.recognize(objectiveCanvas.toDataURL(), 'eng')
+      ]);
+
+      const id = nanoid(5);
+      
+      if (isDebugEnabled) {
+        setDebugImages(prev => ({
+          ...prev,
+          [id]: {
+            reward: rewardCanvas.toDataURL(),
+            objective: objectiveCanvas.toDataURL()
+          }
+        }));
       }
-    ]);
+
+      // Add to extracted data
+      setExtractedData(prevData => [
+        ...prevData, 
+        { 
+          id,
+          timestamp: new Date().toLocaleString(),
+          reward: rewardText.data.text.trim(),
+          objective: objectiveText.data.text.trim()
+        }
+      ]);
+    } catch (error) {
+      console.error('Error extracting text:', error);
+    }
   };
   
   // Initialize peer connection
@@ -171,6 +285,10 @@ const Record = () => {
         <div>
           <h1 className="text-3xl font-bold text-white">Record Contract</h1>
           <p className="text-gray-400 mt-1">Document a new hauling contract</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Switch id="debug-mode" checked={isDebugEnabled} onCheckedChange={toggleDebug} />
+          <Label htmlFor="debug-mode">Debug Mode</Label>
         </div>
       </div>
 
@@ -210,7 +328,7 @@ const Record = () => {
               </Button>
             </div>
             
-            <div className="relative bg-black/30 rounded-lg overflow-hidden h-64 border border-neon-blue/30">
+            <div className="relative bg-black/30 rounded-lg overflow-hidden border border-neon-blue/30 w-full aspect-video">
               <video 
                 ref={videoRef} 
                 autoPlay 
@@ -218,17 +336,40 @@ const Record = () => {
               />
               <canvas 
                 ref={zoneCanvasRef} 
-                className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                className="absolute top-0 left-0 w-full h-full"
+                style={{ cursor: currentZoneType ? 'crosshair' : 'default' }}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
               />
               {captureActive && (
                 <div className="absolute bottom-4 left-4 right-4 flex justify-center space-x-4">
-                  <Button onClick={() => setZone('reward')} className="bg-green-600 hover:bg-green-700">
+                  <Button 
+                    onClick={() => startDrawing('reward')} 
+                    className={cn(
+                      "bg-green-600 hover:bg-green-700 relative",
+                      currentZoneType === 'reward' && "ring-2 ring-white"
+                    )}
+                  >
                     <Square className="h-4 w-4 mr-2" />
                     Set Reward Zone
+                    {zones.reward.width > 0 && (
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-white rounded-full" />
+                    )}
                   </Button>
-                  <Button onClick={() => setZone('objective')} className="bg-blue-600 hover:bg-blue-700">
+                  <Button 
+                    onClick={() => startDrawing('objective')} 
+                    className={cn(
+                      "bg-blue-600 hover:bg-blue-700 relative",
+                      currentZoneType === 'objective' && "ring-2 ring-white"
+                    )}
+                  >
                     <Square className="h-4 w-4 mr-2" />
                     Set Objective Zone
+                    {zones.objective.width > 0 && (
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-white rounded-full" />
+                    )}
                   </Button>
                 </div>
               )}
@@ -310,8 +451,46 @@ const Record = () => {
                     {extractedData.map((data) => (
                       <TableRow key={data.id}>
                         <TableCell className="text-gray-300">{data.timestamp}</TableCell>
-                        <TableCell className="text-green-400 font-semibold">{data.reward}</TableCell>
-                        <TableCell className="text-gray-300">{data.objective}</TableCell>
+                        <TableCell className="text-green-400 font-semibold">
+                          {isDebugEnabled && debugImages[data.id] ? (
+                            <HoverCard>
+                              <HoverCardTrigger asChild>
+                                <span className="cursor-help underline decoration-dotted">
+                                  {data.reward}
+                                </span>
+                              </HoverCardTrigger>
+                              <HoverCardContent className="w-fit">
+                                <img 
+                                  src={debugImages[data.id].reward} 
+                                  alt="Reward Zone" 
+                                  className="border border-green-500"
+                                />
+                              </HoverCardContent>
+                            </HoverCard>
+                          ) : (
+                            data.reward
+                          )}
+                        </TableCell>
+                        <TableCell className="text-gray-300">
+                          {isDebugEnabled && debugImages[data.id] ? (
+                            <HoverCard>
+                              <HoverCardTrigger asChild>
+                                <span className="cursor-help underline decoration-dotted">
+                                  {data.objective}
+                                </span>
+                              </HoverCardTrigger>
+                              <HoverCardContent className="w-fit">
+                                <img 
+                                  src={debugImages[data.id].objective} 
+                                  alt="Objective Zone" 
+                                  className="border border-blue-500"
+                                />
+                              </HoverCardContent>
+                            </HoverCard>
+                          ) : (
+                            data.objective
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

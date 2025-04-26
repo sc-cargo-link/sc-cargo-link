@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,24 +9,27 @@ import ContractsPage from "./components/contracts/ContractsPage";
 import Record from "./components/contracts/Record";
 import RoutesPage from "./components/routes/RoutesPage";
 import NotFound from "./pages/NotFound";
+import { DebugProvider } from "./contexts/DebugContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Layout><Dashboard /></Layout>} />
-          <Route path="/contracts" element={<Layout><ContractsPage /></Layout>} />
-          <Route path="/contracts/record" element={<Layout><Record /></Layout>} />
-          <Route path="/routes" element={<Layout><RoutesPage /></Layout>} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <DebugProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Layout><Dashboard /></Layout>} />
+            <Route path="/contracts" element={<Layout><ContractsPage /></Layout>} />
+            <Route path="/contracts/record" element={<Layout><Record /></Layout>} />
+            <Route path="/routes" element={<Layout><RoutesPage /></Layout>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </DebugProvider>
   </QueryClientProvider>
 );
 
