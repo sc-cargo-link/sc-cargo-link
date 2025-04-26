@@ -22,6 +22,10 @@ import { useDebug } from '@/contexts/DebugContext';
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { contractService } from '@/lib/contractService';
+import { Contract } from '@/lib/db';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { toast } from "@/components/ui/use-toast";
 
 const Record = () => {
   // States
@@ -40,6 +44,8 @@ const Record = () => {
   const [debugImages, setDebugImages] = useState<{[key: string]: { reward: string; objective: string; }}>({});
   const { isDebugEnabled, toggleDebug } = useDebug();
   const [videoScale, setVideoScale] = useState({ scaleX: 1, scaleY: 1, offsetX: 0, offsetY: 0 });
+  const [isCreateSessionDialogOpen, setIsCreateSessionDialogOpen] = useState(false);
+  const [sessionName, setSessionName] = useState('');
   
   // Refs
   const videoRef = useRef(null);
@@ -344,6 +350,48 @@ const Record = () => {
     });
   };
 
+  const handleClearRecords = () => {
+    setExtractedData([]);
+    setDebugImages({});
+  };
+
+  const handleCreateSession = async () => {
+    if (!sessionName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a session name",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const contracts: Contract[] = extractedData.map(data => ({
+        id: data.id,
+        timestamp: data.timestamp,
+        reward: data.reward,
+        objective: data.objective
+      }));
+
+      await contractService.createSession(sessionName, sessionId, contracts);
+      
+      toast({
+        title: "Success",
+        description: "Session created successfully"
+      });
+      
+      setIsCreateSessionDialogOpen(false);
+      setSessionName('');
+    } catch (error) {
+      console.error('Error creating session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create session",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -441,45 +489,46 @@ const Record = () => {
             </div>
           </div>
           
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white">Session Information</h3>
-            <div className="flex items-center space-x-4">
-              <div className="space-y-2 flex-1">
-                <p className="text-sm font-medium text-gray-400">Your Session ID</p>
-                <div className="flex space-x-2">
-                  <Input value={sessionId} readOnly className="bg-space-medium border-neon-blue/20" />
-                  <Button onClick={() => setSessionId(nanoid(10))} variant="outline" className="border-neon-blue/50">
-                    Generate New
-                  </Button>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Session Information</h3>
+              <div className="flex items-center space-x-4">
+                <div className="space-y-2 flex-1">
+                  <p className="text-sm font-medium text-gray-400">Your Session ID</p>
+                  <div className="flex space-x-2">
+                    <Input value={sessionId} readOnly className="bg-space-medium border-neon-blue/20" />
+                    <Button onClick={() => setSessionId(nanoid(10))} variant="outline" className="border-neon-blue/50">
+                      Generate New
+                    </Button>
+                  </div>
+                </div>
+                <div className="bg-white p-4 rounded-lg">
+                  <QrCode className="h-24 w-24 text-black" />
                 </div>
               </div>
-              <div className="bg-white p-4 rounded-lg">
-                {/* This would be a QR code component in production */}
-                <QrCode className="h-24 w-24 text-black" />
-              </div>
             </div>
-          </div>
-          
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white">Connect to Remote Session</h3>
-            <div className="flex space-x-2">
-              <Input 
-                value={connectId} 
-                onChange={(e) => setConnectId(e.target.value)}
-                placeholder="Enter session ID" 
-                className="bg-space-medium border-neon-blue/20" 
-              />
-              <Button 
-                onClick={connectToPeer}
-                className="bg-neon-blue text-space-dark hover:bg-neon-blue/90"
-              >
-                Connect
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Connect to Remote Session</h3>
+              <div className="flex space-x-2">
+                <Input 
+                  value={connectId} 
+                  onChange={(e) => setConnectId(e.target.value)}
+                  placeholder="Enter session ID" 
+                  className="bg-space-medium border-neon-blue/20" 
+                />
+                <Button 
+                  onClick={connectToPeer}
+                  className="bg-neon-blue text-space-dark hover:bg-neon-blue/90"
+                >
+                  Connect
+                </Button>
+              </div>
+              <Button variant="outline" className="w-full border-neon-blue/50 text-neon-blue hover:bg-neon-blue/10">
+                <QrCode className="h-4 w-4 mr-2" />
+                Scan QR Code
               </Button>
             </div>
-            <Button variant="outline" className="w-full border-neon-blue/50 text-neon-blue hover:bg-neon-blue/10">
-              <QrCode className="h-4 w-4 mr-2" />
-              Scan QR Code
-            </Button>
           </div>
         </CollapsibleContent>
       </Collapsible>
@@ -503,70 +552,119 @@ const Record = () => {
             <h3 className="text-lg font-semibold text-white mb-4">Extracted Information</h3>
             
             {extractedData.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-neon-blue">Time</TableHead>
-                      <TableHead className="text-neon-blue">Reward</TableHead>
-                      <TableHead className="text-neon-blue">Objective</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {extractedData.map((data) => (
-                      <TableRow key={data.id}>
-                        <TableCell className="text-gray-300">{data.timestamp}</TableCell>
-                        <TableCell className="text-green-400 font-semibold">
-                          {isDebugEnabled && debugImages[data.id] ? (
-                            <HoverCard>
-                              <HoverCardTrigger asChild>
-                                <span className="cursor-help underline decoration-dotted">
-                                  {data.reward}
-                                </span>
-                              </HoverCardTrigger>
-                              <HoverCardContent className="w-fit">
-                                <img 
-                                  src={debugImages[data.id].reward} 
-                                  alt="Reward Zone" 
-                                  className="border border-green-500"
-                                />
-                              </HoverCardContent>
-                            </HoverCard>
-                          ) : (
-                            data.reward
-                          )}
-                        </TableCell>
-                        <TableCell className="text-gray-300">
-                          {isDebugEnabled && debugImages[data.id] ? (
-                            <HoverCard>
-                              <HoverCardTrigger asChild>
-                                <span className="cursor-help underline decoration-dotted">
-                                  {data.objective}
-                                </span>
-                              </HoverCardTrigger>
-                              <HoverCardContent className="w-fit">
-                                <img 
-                                  src={debugImages[data.id].objective} 
-                                  alt="Objective Zone" 
-                                  className="border border-blue-500"
-                                />
-                              </HoverCardContent>
-                            </HoverCard>
-                          ) : (
-                            data.objective
-                          )}
-                        </TableCell>
+              <>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-neon-blue">Time</TableHead>
+                        <TableHead className="text-neon-blue">Reward</TableHead>
+                        <TableHead className="text-neon-blue">Objective</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {extractedData.map((data) => (
+                        <TableRow key={data.id}>
+                          <TableCell className="text-gray-300">{data.timestamp}</TableCell>
+                          <TableCell className="text-green-400 font-semibold">
+                            {isDebugEnabled && debugImages[data.id] ? (
+                              <HoverCard>
+                                <HoverCardTrigger asChild>
+                                  <span className="cursor-help underline decoration-dotted">
+                                    {data.reward}
+                                  </span>
+                                </HoverCardTrigger>
+                                <HoverCardContent className="w-fit">
+                                  <img 
+                                    src={debugImages[data.id].reward} 
+                                    alt="Reward Zone" 
+                                    className="border border-green-500"
+                                  />
+                                </HoverCardContent>
+                              </HoverCard>
+                            ) : (
+                              data.reward
+                            )}
+                          </TableCell>
+                          <TableCell className="text-gray-300">
+                            {isDebugEnabled && debugImages[data.id] ? (
+                              <HoverCard>
+                                <HoverCardTrigger asChild>
+                                  <span className="cursor-help underline decoration-dotted">
+                                    {data.objective}
+                                  </span>
+                                </HoverCardTrigger>
+                                <HoverCardContent className="w-fit">
+                                  <img 
+                                    src={debugImages[data.id].objective} 
+                                    alt="Objective Zone" 
+                                    className="border border-blue-500"
+                                  />
+                                </HoverCardContent>
+                              </HoverCard>
+                            ) : (
+                              data.objective
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <div className="flex justify-end space-x-4 mt-4">
+                  <Button
+                    variant="outline"
+                    className="border-red-500/50 text-red-500 hover:bg-red-500/10"
+                    onClick={handleClearRecords}
+                  >
+                    Clear Records
+                  </Button>
+                  <Button
+                    className="bg-neon-blue text-space-dark hover:bg-neon-blue/90"
+                    onClick={() => setIsCreateSessionDialogOpen(true)}
+                  >
+                    Create Session
+                  </Button>
+                </div>
+              </>
             ) : (
               <p className="text-gray-400 text-center py-8">No data captured yet. Use the capture button to extract information.</p>
             )}
           </div>
         </div>
       </div>
+
+      <Dialog open={isCreateSessionDialogOpen} onOpenChange={setIsCreateSessionDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Session</DialogTitle>
+            <DialogDescription>
+              Give your session a name to save it. This will store all captured contracts.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="session-name">Session Name</Label>
+            <Input
+              id="session-name"
+              value={sessionName}
+              onChange={(e) => setSessionName(e.target.value)}
+              placeholder="Enter session name"
+              className="mt-2"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsCreateSessionDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleCreateSession}>
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
