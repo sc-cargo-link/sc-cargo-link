@@ -6,3 +6,4 @@ alwaysApply: true
 - always make it look modern and pretty.
 - use tailwind and radix-ui when required
 - always make it responsive design.
+- when refactoring/moving code analyize the logic and make sure to not break anything

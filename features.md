@@ -45,3 +45,5 @@ An app to help organize and plan hauling missions in star citizen.
 - https://ruadhan2301.github.io/SCHaulingManifest/
 - https://jonathonhillnz.github.io/sc-cargo-manifest/
 - https://sloshza.github.io/SC-Cargo-Tracker/
+- https://snareplan.dolus.eu/
+- https://quantumtravel.regalpudding.com/
