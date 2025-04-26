@@ -48,6 +48,7 @@ const Record = () => {
   const peerRef = useRef(null);
   const extractedDataRef = useRef(extractedData);
   const debugImagesRef = useRef(debugImages);
+  const zonesRef = useRef(zones);
   
   // Start screen capture
   const startCapture = async () => {
@@ -273,23 +274,23 @@ const Record = () => {
     // Extract text from reward zone
     const rewardCanvas = document.createElement('canvas');
     const rewardContext = rewardCanvas.getContext('2d');
-    rewardCanvas.width = zones.reward.width;
-    rewardCanvas.height = zones.reward.height;
+    rewardCanvas.width = zonesRef.current.reward.width;
+    rewardCanvas.height = zonesRef.current.reward.height;
     rewardContext.drawImage(
       video,
-      zones.reward.x, zones.reward.y, zones.reward.width, zones.reward.height,
-      0, 0, zones.reward.width, zones.reward.height
+      zonesRef.current.reward.x, zonesRef.current.reward.y, zonesRef.current.reward.width, zonesRef.current.reward.height,
+      0, 0, zonesRef.current.reward.width, zonesRef.current.reward.height
     );
     
     // Extract text from objective zone
     const objectiveCanvas = document.createElement('canvas');
     const objectiveContext = objectiveCanvas.getContext('2d');
-    objectiveCanvas.width = zones.objective.width;
-    objectiveCanvas.height = zones.objective.height;
+    objectiveCanvas.width = zonesRef.current.objective.width;
+    objectiveCanvas.height = zonesRef.current.objective.height;
     objectiveContext.drawImage(
       video,
-      zones.objective.x, zones.objective.y, zones.objective.width, zones.objective.height,
-      0, 0, zones.objective.width, zones.objective.height
+      zonesRef.current.objective.x, zonesRef.current.objective.y, zonesRef.current.objective.width, zonesRef.current.objective.height,
+      0, 0, zonesRef.current.objective.width, zonesRef.current.objective.height
     );
     
     // Sharpening kernel
@@ -475,6 +476,7 @@ const Record = () => {
 
   useEffect(() => { extractedDataRef.current = extractedData; }, [extractedData]);
   useEffect(() => { debugImagesRef.current = debugImages; }, [debugImages]);
+  useEffect(() => { zonesRef.current = zones; }, [zones]);
 
   return (
     <div className="space-y-6">
