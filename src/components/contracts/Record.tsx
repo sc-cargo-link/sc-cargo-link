@@ -31,7 +31,6 @@ const Record = () => {
     separator: '-',
   }));
   const [captureActive, setCaptureActive] = useState(false);
-  const [connectId, setConnectId] = useState('');
   const [extractedData, setExtractedData] = useState([]);
   const [zones, setZones] = useState({
     reward: { x: 0, y: 0, width: 100, height: 50 },
@@ -46,7 +45,7 @@ const Record = () => {
   const [isCreateSessionDialogOpen, setIsCreateSessionDialogOpen] = useState(false);
   const [sessionName, setSessionName] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const conn = useRef(null);
+  const connRef = useRef(null);
   // Refs
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -357,15 +356,15 @@ const Record = () => {
       }
 
       if (rewardText.data.text.trim() === '') {
-        if (conn.current) {
-          conn.current.send({ type: 'error', message: 'No text found in the reward zone' });
+        if (connRef.current) {
+          connRef.current.send({ type: 'error', message: 'No text found in the reward zone' });
         }
         setErrorMessage('No text found in the reward zone');
         return;
       }
       if (objectiveText.data.text.trim() === '') {
-        if (conn.current) {
-          conn.current.send({ type: 'error', message: 'No text found in the objective zone' });
+        if (connRef.current) {
+          connRef.current.send({ type: 'error', message: 'No text found in the objective zone' });
         }
         setErrorMessage('No text found in the objective zone');
         return;
@@ -391,7 +390,7 @@ const Record = () => {
   }, []);
 
   const handleConnection = (conn) => {
-    conn.current = conn;
+    connRef.current = conn;
     let interval: NodeJS.Timeout | null = null;
     console.log("Connection on record");
     // Only set up the handler once
