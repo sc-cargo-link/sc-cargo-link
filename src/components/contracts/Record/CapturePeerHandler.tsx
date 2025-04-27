@@ -2,6 +2,7 @@ import React, { useEffect, useImperativeHandle, forwardRef, useRef } from 'react
 import { nanoid } from 'nanoid';
 import Tesseract from 'tesseract.js';
 import { Peer } from 'peerjs';
+import { objectiveParser, rewardParser } from '@/lib/parser';
 
 function sharpenCanvas(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext('2d');
@@ -78,6 +79,10 @@ const CapturePeerHandler = forwardRef<CapturePeerHandlerRef, CapturePeerHandlerP
     const workers = [];
     for (let i = 0; i < 2; i++) {
       const worker = await Tesseract.createWorker('eng');
+      await worker.setParameters({
+        tessedit_char_whitelist: '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-/.',
+        preserve_interword_spaces: '1'
+      })
       await worker.reinitialize('eng');
       scheduler.addWorker(worker);
       workers.push(worker);
@@ -195,8 +200,8 @@ const CapturePeerHandler = forwardRef<CapturePeerHandlerRef, CapturePeerHandlerP
         { 
           id,
           timestamp: new Date().toLocaleString(),
-          reward: rewardText.data.text.trim(),
-          objective: objectiveText.data.text.trim()
+          reward: rewardParser(rewardText.data.text.trim()),
+          objective: objectiveParser(objectiveText.data.text.trim())
         }
       ]);
     } catch (error) {

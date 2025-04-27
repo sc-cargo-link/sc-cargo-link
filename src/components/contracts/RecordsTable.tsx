@@ -6,8 +6,12 @@ interface RecordsTableProps {
   records: Array<{
     id: string;
     timestamp: string;
-    reward: string;
-    objective: string;
+    reward: number;
+    objective: Array<{
+      item: string;
+      location: string;
+      quantity: number;
+    }>;
   }>;
   debugImages: {
     [key: string]: {
@@ -45,7 +49,23 @@ const RecordsTable: React.FC<RecordsTableProps> = ({ records, debugImages }) => 
                 <TableCell className="text-gray-300">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span>{item.objective}</span>
+                      <span className="whitespace-pre-line block">
+                        {item.objective.map((obj, idx) => (
+                          <React.Fragment key={idx}>
+                            {obj.item && obj.location && Array.isArray((obj as any).deliveries) ? (
+                              <>
+                                {`Collect ${obj.item} from ${obj.location}.`}
+                                {(obj as any).deliveries.map((del: any, dIdx: number) => (
+                                  <div key={dIdx} className="ml-4">{`- Deliver 0/${del.quantity} SCU to ${del.location}.`}</div>
+                                ))}
+                              </>
+                            ) : obj.location && obj.quantity ? (
+                              <div>{`- Deliver 0/${obj.quantity} SCU to ${obj.location}.`}</div>
+                            ) : null}
+                            {/* {idx !== item.objective.length - 1 && <br />} */}
+                          </React.Fragment>
+                        ))}
+                      </span>
                     </TooltipTrigger>
                     <TooltipContent side="top">
                       <img src={debugImages[item.id]?.objective} alt="Objective Debug" className="max-w-xs max-h-40" />

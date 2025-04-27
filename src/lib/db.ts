@@ -11,8 +11,12 @@ export interface ContractSession {
 export interface Contract {
   id: string;
   timestamp: string;
-  reward: string;
-  objective: string;
+  reward: number;
+  objective: Array<{
+    item: string;
+    location: string;
+    quantity: number;
+  }>;
 }
 
 class HaulPlannerDB extends Dexie {
@@ -21,7 +25,8 @@ class HaulPlannerDB extends Dexie {
   constructor() {
     super('HaulPlannerDB');
     this.version(1).stores({
-      contractSessions: '++id, sessionId, name, createdAt'
+      contractSessions: '++id, sessionId, name, createdAt',
+      contracts: '++id, timestamp, reward, objective'
     });
   }
 }
