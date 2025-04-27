@@ -77,6 +77,7 @@ const RemoteSession = () => {
       setLoading(false);
     });
     connection.on('data', (data) => {
+      console.log("data", data);
       if (data.type === 'records') {
         setRecords(data.records);
         setDebugImages(data.debugImages || {});
@@ -125,6 +126,16 @@ const RemoteSession = () => {
     }
   };
 
+  const handleUpdateRecords = (updatedRecords) => {
+    setRecords(_ => updatedRecords);
+    if (conn && connected) {
+      conn.send({
+        type: 'records-update',
+        records: updatedRecords
+      });
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto py-8 space-y-8">
       <h1 className="text-2xl font-bold text-white mb-4">Remote Session</h1>
@@ -170,7 +181,11 @@ const RemoteSession = () => {
       <div id="error-message" className="text-red-500">
         {errorMessage}
       </div>
-      <RecordsTable records={records} debugImages={debugImages} />
+      <RecordsTable 
+        records={records} 
+        debugImages={debugImages} 
+        onUpdate={handleUpdateRecords}
+      />
     </div>
   );
 };

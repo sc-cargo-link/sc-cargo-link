@@ -215,8 +215,12 @@ const CapturePeerHandler = forwardRef<CapturePeerHandlerRef, CapturePeerHandlerP
     connRef.current = conn;
     let interval = null;
     conn.on('data', (data) => {
+      console.log("data", data);
       if (data.type === 'capture-request') {
         captureScreen();
+      }
+      if (data.type === 'records-update') {
+        setExtractedData(data.records);
       }
     });
     interval = setInterval(() => {

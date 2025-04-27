@@ -140,8 +140,11 @@ const Record = () => {
           </div>
           <canvas ref={canvasRef} className="hidden" />
           
-            
-            <RecordsTable records={extractedData} debugImages={debugImages} />
+          <RecordsTable 
+            records={extractedData} 
+            debugImages={debugImages} 
+            onUpdate={setExtractedData}
+          />
         </div>
       </div>
 
