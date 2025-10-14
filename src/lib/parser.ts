@@ -31,11 +31,26 @@ const extractCollect = (line: string) => {
 //   }
 // note: in can include spaces
 const extractDeliver = (line: string) => {
-    // if there is content "Deliver 07" then replace it with "Deliver 0/7"
-    line = line.replace('Deliver 07', 'Deliver 0/');
-    const item = line.match(/Deliver (\d+)\/(.*) SCU to (.*)\./);
-    if (item) {
-        return { quantity: parseInt(item[2]), location: item[3] };
+    // Normalize whitespace
+    line = line.replace(/\s+/g, ' ').trim();
+    // Pattern like: Deliver 0/42 SCU to Seraphim Station.
+    // and variant: Deliver 0/82 SCU of Quartz (Raw) to Shallow Frontier Station.
+    const withSlash = line.match(/Deliver\s+\d+\/(\d+)\s*SCU(?:\s+of\s+.*?)?\s+to\s+(.*)\./);
+    if (withSlash) {
+        let location = withSlash[2].trim();
+        if (/\bon microTech$/i.test(location)) {
+            location += '.';
+        }
+        return { quantity: parseInt(withSlash[1]), location };
+    }
+    // OCR variant: Deliver 07 SCU to TDD.
+    const noSlash = line.match(/Deliver\s+0?(\d+)\s*SCU to (.*)\./);
+    if (noSlash) {
+        let location = noSlash[2].trim();
+        if (/\bon microTech$/i.test(location)) {
+            location += '.';
+        }
+        return { quantity: parseInt(noSlash[1]), location };
     }
     return null;
 }
@@ -51,7 +66,8 @@ const objectiveParser = (objective: string) => {
     // split them into jobs. A job has collect then followed by 1 or more lines with deliver
     const jobs = [];
     let currentJob = null;
-    for (const line of lines) {
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
         if (line.includes('Collect')) {
             if (currentJob) {
                 jobs.push(currentJob);
@@ -61,7 +77,13 @@ const objectiveParser = (objective: string) => {
                 currentJob.deliveries = [];
             }
         } else if (line.includes('Deliver')) {
-            const result = extractDeliver(line);
+            // Deliver may span multiple lines; accumulate until the sentence-ending period
+            let deliverLine = line;
+            while (!deliverLine.trim().endsWith('.') && i + 1 < lines.length) {
+                i++;
+                deliverLine += ' ' + lines[i].trim();
+            }
+            const result = extractDeliver(deliverLine);
             if (result) {
                 currentJob.deliveries.push(result);
             }
