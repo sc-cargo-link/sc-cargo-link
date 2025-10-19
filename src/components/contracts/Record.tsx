@@ -13,13 +13,14 @@ import DebugImagesViewer from '@/components/contracts/Record/DebugImagesViewer';
 import CreateSessionDialog from '@/components/contracts/Record/CreateSessionDialog';
 import Setup from '@/components/contracts/Record/Setup';
 import CapturePeerHandler, { CapturePeerHandlerRef } from '@/components/contracts/Record/CapturePeerHandler';
+import { loadFromStorage, saveToStorage, removeFromStorage } from '@/lib/storage';
 
 const Record = () => {
   // States
   const [captureActive, setCaptureActive] = useState(false);
   const [debugImages, setDebugImages] = useState<{[key: string]: { reward: string; objective: string; }}>({});
   const [errorMessage, setErrorMessage] = useState('');
-  const [extractedData, setExtractedData] = useState([]);
+  const [extractedData, setExtractedData] = useState(() => loadFromStorage('extractedData', []));
   const [isCreateSessionDialogOpen, setIsCreateSessionDialogOpen] = useState(false);
   const { isDebugEnabled, toggleDebug } = useDebug();
   const [sessionName, setSessionName] = useState('');
@@ -47,6 +48,7 @@ const Record = () => {
   const handleClearRecords = () => {
     setExtractedData([]);
     setDebugImages({});
+    removeFromStorage('extractedData');
   };
 
   const handleCreateSession = async () => {
@@ -89,6 +91,11 @@ const Record = () => {
   useEffect(() => { extractedDataRef.current = extractedData; }, [extractedData]);
   useEffect(() => { debugImagesRef.current = debugImages; }, [debugImages]);
   useEffect(() => { zonesRef.current = zones; }, [zones]);
+
+  // Persist extracted records to localStorage whenever they change
+  useEffect(() => {
+    saveToStorage('extractedData', extractedData);
+  }, [extractedData]);
 
   return (
     <div className="space-y-6">
