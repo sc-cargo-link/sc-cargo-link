@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Package, Route } from 'lucide-react';
+import { Package, Route, MapPin } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -67,6 +67,18 @@ const Navbar = () => {
             >
               <Route className="h-5 w-5 mr-2" />
               Routes
+            </Link>
+            
+            <Link
+              to="/route-planning"
+              className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                location.pathname === '/route-planning' 
+                  ? 'text-neon-blue bg-space-medium' 
+                  : 'text-gray-300 hover:text-neon-blue'
+              }`}
+            >
+              <MapPin className="h-5 w-5 mr-2" />
+              Route Planning
             </Link>
           </div>
         </div>

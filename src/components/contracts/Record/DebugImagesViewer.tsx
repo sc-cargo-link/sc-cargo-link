@@ -2,7 +2,7 @@ import React from 'react';
 
 interface DebugImagesViewerProps {
   isDebugEnabled: boolean;
-  debugImages: { [key: string]: { reward: string; objective: string } };
+  debugImages: { [key: string]: { reward: string; objective: string; contractName: string } };
 }
 
 const DebugImagesViewer: React.FC<DebugImagesViewerProps> = ({ isDebugEnabled, debugImages }) => {
@@ -57,6 +57,28 @@ const DebugImagesViewer: React.FC<DebugImagesViewerProps> = ({ isDebugEnabled, d
             }
           }}
           className="border border-blue-400 rounded-lg max-w-xs h-auto bg-black shadow-lg"
+          style={{ display: 'block' }}
+        />
+      </div>
+      <div className="flex flex-col items-center">
+        <span className="text-xs text-purple-400 mb-1">Contract Name Zone (Canvas)</span>
+        <canvas
+          width={1}
+          height={1}
+          ref={el => {
+            if (el && images.contractName) {
+              const img = new window.Image();
+              img.onload = () => {
+                el.width = img.width;
+                el.height = img.height;
+                const ctx = el.getContext('2d');
+                ctx.clearRect(0, 0, el.width, el.height);
+                ctx.drawImage(img, 0, 0);
+              };
+              img.src = images.contractName;
+            }
+          }}
+          className="border border-purple-400 rounded-lg max-w-xs h-auto bg-black shadow-lg"
           style={{ display: 'block' }}
         />
       </div>

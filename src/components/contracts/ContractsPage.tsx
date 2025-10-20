@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Trash, Search, Plus } from 'lucide-react';
 import { loadFromStorage, saveToStorage } from '@/lib/storage';
 
@@ -11,6 +12,7 @@ type ExtractedRecord = {
   id: string;
   timestamp: string;
   reward: number;
+  contractName?: string;
   objective: Array<{
     item: string;
     location: string; // source
@@ -20,19 +22,20 @@ type ExtractedRecord = {
 
 type StatusValue = 'pending' | 'in-progress' | 'completed' | 'failed';
 
-type FlattenedContract = {
-  id: string; // composite id: recordId|objIdx|delIdx
+type ContractDisplay = {
+  id: string; // recordId|objIdx
   recordId: string;
   item: string;
   source: string;
-  destination: string;
-  quantity: number;
+  deliveries: Array<{ location: string; quantity: number }>;
   reward: number;
+  contractName?: string;
   timestamp: string;
   status: StatusValue;
 };
 
 const STATUS_STORAGE_KEY = 'contractStatusMap';
+const COMPLETED_STORAGE_KEY = 'contractCompletedMap';
 
 const ContractsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,6 +43,9 @@ const ContractsPage = () => {
   const [records, setRecords] = useState<ExtractedRecord[]>(() => loadFromStorage('extractedData', []));
   const [statusMap, setStatusMap] = useState<Record<string, StatusValue>>(
     () => loadFromStorage<Record<string, StatusValue>>(STATUS_STORAGE_KEY, {})
+  );
+  const [completedMap, setCompletedMap] = useState<Record<string, boolean>>(
+    () => loadFromStorage<Record<string, boolean>>(COMPLETED_STORAGE_KEY, {})
   );
 
   useEffect(() => {
@@ -55,65 +61,139 @@ const ContractsPage = () => {
     saveToStorage(STATUS_STORAGE_KEY, statusMap);
   }, [statusMap]);
 
-  const flattened = useMemo<FlattenedContract[]>(() => {
-    const list: FlattenedContract[] = [];
+  useEffect(() => {
+    saveToStorage(COMPLETED_STORAGE_KEY, completedMap);
+  }, [completedMap]);
+
+  const contracts = useMemo<ContractDisplay[]>(() => {
+    const list: ContractDisplay[] = [];
     for (const rec of records) {
       rec.objective.forEach((obj, objIdx) => {
-        (obj.deliveries || []).forEach((del, delIdx) => {
-          const id = `${rec.id}|${objIdx}|${delIdx}`;
-          const status = statusMap[id] ?? 'pending';
-          list.push({
-            id,
-            recordId: rec.id,
-            item: obj.item,
-            source: obj.location,
-            destination: del.location,
-            quantity: del.quantity,
-            reward: rec.reward,
-            timestamp: rec.timestamp,
-            status,
-          });
+        const id = `${rec.id}|${objIdx}`;
+        const status = statusMap[id] ?? 'pending';
+        list.push({
+          id,
+          recordId: rec.id,
+          item: obj.item,
+          source: obj.location,
+          deliveries: obj.deliveries || [],
+          reward: rec.reward,
+          contractName: rec.contractName,
+          timestamp: rec.timestamp,
+          status,
         });
       });
     }
     return list.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [records, statusMap]);
 
-  const filteredContracts = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    return flattened.filter(c => {
-      const matchesSearch =
-        q === '' ||
-        c.item.toLowerCase().includes(q) ||
-        c.source.toLowerCase().includes(q) ||
-        c.destination.toLowerCase().includes(q) ||
-        String(c.quantity).includes(q) ||
-        String(c.reward).includes(q);
-      const matchesStatus = statusFilter === 'all' || c.status === statusFilter;
-      return matchesSearch && matchesStatus;
+  const groupedContracts = useMemo(() => {
+    const groups: { [recordId: string]: ContractDisplay[] } = {};
+    contracts.forEach(contract => {
+      if (!groups[contract.recordId]) {
+        groups[contract.recordId] = [];
+      }
+      groups[contract.recordId].push(contract);
     });
-  }, [flattened, searchQuery, statusFilter]);
+    return groups;
+  }, [contracts]);
+
+  const filteredGroupedContracts = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const filtered: { [recordId: string]: ContractDisplay[] } = {};
+    
+    Object.entries(groupedContracts).forEach(([recordId, contractGroup]) => {
+      const filteredGroup = contractGroup.filter(c => {
+        const matchesSearch =
+          q === '' ||
+          c.item.toLowerCase().includes(q) ||
+          c.source.toLowerCase().includes(q) ||
+          (c.contractName && c.contractName.toLowerCase().includes(q)) ||
+          c.deliveries.some(del => del.location.toLowerCase().includes(q)) ||
+          c.deliveries.some(del => String(del.quantity).includes(q)) ||
+          String(c.reward).includes(q);
+        const matchesStatus = statusFilter === 'all' || c.status === statusFilter;
+        return matchesSearch && matchesStatus;
+      });
+      
+      if (filteredGroup.length > 0) {
+        filtered[recordId] = filteredGroup;
+      }
+    });
+    
+    return filtered;
+  }, [groupedContracts, searchQuery, statusFilter]);
 
   const updateStatus = (id: string, next: StatusValue) => {
     setStatusMap(prev => ({ ...prev, [id]: next }));
   };
 
   const removeContract = (id: string) => {
-    // update records in storage by removing the matching delivery
-    const [recordId, objIdxStr, delIdxStr] = id.split('|');
-    const objIdx = Number(objIdxStr), delIdx = Number(delIdxStr);
-    const nextRecords = records.map(r => ({ ...r, objective: r.objective.map(o => ({ ...o, deliveries: [...(o.deliveries || [])] })) }));
-    const rec = nextRecords.find(r => r.id === recordId);
-    if (!rec) return;
-    const obj = rec.objective[objIdx];
-    if (!obj) return;
-    if (!obj.deliveries) return;
-    obj.deliveries.splice(delIdx, 1);
-    // prune empty structures
-    rec.objective = rec.objective.filter(o => (o.deliveries && o.deliveries.length > 0));
+    // update records in storage by removing the matching objective
+    const [recordId, objIdxStr] = id.split('|');
+    const objIdx = Number(objIdxStr);
+    const nextRecords = records.map(r => {
+      if (r.id === recordId) {
+        const newObjectives = r.objective.filter((_, idx) => idx !== objIdx);
+        return { ...r, objective: newObjectives };
+      }
+      return r;
+    });
+    // prune empty records
     const finalRecords = nextRecords.filter(r => r.objective.length > 0);
     setRecords(finalRecords);
     saveToStorage('extractedData', finalRecords);
+  };
+
+  const removeContractGroup = (recordId: string) => {
+    // Remove entire contract group (all objectives for this record)
+    const nextRecords = records.filter(r => r.id !== recordId);
+    setRecords(nextRecords);
+    saveToStorage('extractedData', nextRecords);
+  };
+
+  const updateContractGroupStatus = (recordId: string, status: StatusValue) => {
+    // Update status for all contracts in the group
+    const group = groupedContracts[recordId];
+    if (group) {
+      const updates: Record<string, StatusValue> = {};
+      group.forEach(contract => {
+        updates[contract.id] = status;
+      });
+      setStatusMap(prev => ({ ...prev, ...updates }));
+    }
+  };
+
+  const getGroupStatus = (recordId: string): StatusValue => {
+    const group = groupedContracts[recordId];
+    if (!group || group.length === 0) return 'pending';
+    
+    // If all contracts have the same status, return that status
+    const firstStatus = group[0].status;
+    if (group.every(contract => contract.status === firstStatus)) {
+      return firstStatus;
+    }
+    
+    // If mixed statuses, return 'in-progress' as default
+    return 'in-progress';
+  };
+
+  const toggleContractCompleted = (contractId: string) => {
+    setCompletedMap(prev => ({
+      ...prev,
+      [contractId]: !prev[contractId]
+    }));
+  };
+
+  const isContractCompleted = (contractId: string): boolean => {
+    return completedMap[contractId] || false;
+  };
+
+  const calculateTotalSCU = (contractGroup: ContractDisplay[]): number => {
+    return contractGroup.reduce((total, contract) => {
+      const contractSCU = contract.deliveries.reduce((sum, delivery) => sum + delivery.quantity, 0);
+      return total + contractSCU;
+    }, 0);
   };
 
   const statusColor = (status: StatusValue) => {
@@ -165,45 +245,87 @@ const ContractsPage = () => {
       </div>
 
       <div className="holographic-panel rounded-lg p-4 border border-neon-blue/20">
-        {filteredContracts.length === 0 ? (
+        {Object.keys(filteredGroupedContracts).length === 0 ? (
           <p className="text-gray-400">No contracts available</p>
         ) : (
           <div className="space-y-3">
-            {filteredContracts.map(c => (
-              <div key={c.id} className="p-4 bg-space-medium/50 border border-neon-blue/20 rounded-lg">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-white">{c.item}</h3>
-                      <Badge className={statusColor(c.status)}>{c.status}</Badge>
+            {Object.entries(filteredGroupedContracts).map(([recordId, contractGroup]) => {
+              const firstContract = contractGroup[0];
+              const groupStatus = getGroupStatus(recordId);
+              const totalReward = firstContract.reward;
+              const totalSCU = calculateTotalSCU(contractGroup);
+              
+              return (
+                <div key={recordId} className="p-3 bg-space-medium/50 border border-neon-blue/20 rounded-lg">
+                  <div className="flex items-center justify-between gap-4 mb-2">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <span className="text-xs text-gray-400 font-mono">[{recordId}]</span>
+                      {firstContract.contractName && (
+                        <span className="text-white font-medium text-sm">{firstContract.contractName}</span>
+                      )}
+                      <span className="text-green-400 font-semibold">{totalReward?.toLocaleString?.() ?? totalReward} aUEC</span>
+                      <span className="text-neon-blue font-semibold">{totalSCU} SCU</span>
+                      <Badge className={`${statusColor(groupStatus)} text-xs`}>{groupStatus}</Badge>
                     </div>
-                    <div className="text-sm text-gray-300">
-                      <div>From: <span className="text-white">{c.source}</span></div>
-                      <div>To: <span className="text-white">{c.destination}</span></div>
-                      <div>Qty: <span className="text-white">{c.quantity}</span></div>
-                      <div>Reward: <span className="text-white">{c.reward?.toLocaleString?.() ?? c.reward} aUEC</span></div>
-                      <div className="text-gray-400">{new Date(c.timestamp).toLocaleString()}</div>
+                    <div className="flex items-center gap-2">
+                      <Select value={groupStatus} onValueChange={(v) => updateContractGroupStatus(recordId, v as StatusValue)}>
+                        <SelectTrigger className="w-[120px] h-8 bg-space-medium border-neon-blue/20 focus:border-neon-blue text-xs">
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="in-progress">In Progress</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="failed">Failed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="h-8 px-2 border-red-500/40 text-red-300 hover:bg-red-500/10" 
+                        onClick={() => removeContractGroup(recordId)}
+                      >
+                        <Trash className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2 min-w-[180px] items-end">
-                    <Select value={c.status} onValueChange={(v) => updateStatus(c.id, v as StatusValue)}>
-                      <SelectTrigger className="w-[160px] bg-space-medium border-neon-blue/20 focus:border-neon-blue">
-                        <SelectValue placeholder="Set status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="in-progress">In Progress</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="failed">Failed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button variant="outline" className="border-red-500/40 text-red-300 hover:bg-red-500/10" onClick={() => removeContract(c.id)}>
-                      <Trash className="h-4 w-4 mr-2" /> Remove
-                    </Button>
+                  <div className="space-y-1">
+                    {contractGroup.map((contract, contractIdx) => {
+                      const isCompleted = isContractCompleted(contract.id);
+                      return (
+                        <div key={contract.id} className="space-y-1">
+                          {contract.deliveries.length > 0 ? (
+                            contract.deliveries.map((delivery, idx) => (
+                              <div key={idx} className={`text-sm text-gray-300 flex items-center gap-2 ${isCompleted ? 'line-through opacity-60' : ''}`}>
+                                <Checkbox
+                                  checked={isCompleted}
+                                  onCheckedChange={() => toggleContractCompleted(contract.id)}
+                                  className="mr-2"
+                                />
+                                <span className="text-white font-medium">{contract.item}</span>
+                                <span className="text-gray-400">{contract.source}</span>
+                                <span className="text-gray-400">→</span>
+                                <span className="text-white">{delivery.location}</span>
+                                <span className="text-neon-blue text-xs">({delivery.quantity} SCU)</span>
+                              </div>
+                            ))
+                          ) : (
+                            <div className={`text-sm text-gray-500 italic flex items-center gap-2 ${isCompleted ? 'line-through opacity-60' : ''}`}>
+                              <Checkbox
+                                checked={isCompleted}
+                                onCheckedChange={() => toggleContractCompleted(contract.id)}
+                                className="mr-2"
+                              />
+                              {contract.item} {contract.source} - No deliveries specified
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

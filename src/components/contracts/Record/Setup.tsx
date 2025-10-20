@@ -5,6 +5,7 @@ import { Camera, Square, ArrowDown, ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SessionInfo from '@/components/contracts/Record/SessionInfo';
 import VideoZoneSelector from '@/components/contracts/Record/VideoZoneSelector';
+import { loadFromStorage } from '@/lib/storage';
 
 interface SetupProps {
   isSetupOpen: boolean;
@@ -24,10 +25,11 @@ const Setup: React.FC<SetupProps> = ({
   videoRef
 }) => {
   const [captureActive, setCaptureActive] = useState(false);
-  const [zones, setZones] = useState({
+  const [zones, setZones] = useState(() => loadFromStorage('userZones', {
     reward: { x: 0, y: 0, width: 100, height: 50 },
-    objective: { x: 0, y: 0, width: 100, height: 50 }
-  });
+    objective: { x: 0, y: 0, width: 100, height: 50 },
+    contractName: { x: 0, y: 0, width: 200, height: 30 }
+  }));
 
   useEffect(() => { if (onZonesChange) onZonesChange(zones); }, [zones]);
   useEffect(() => { if (onCaptureActiveChange) onCaptureActiveChange(captureActive); }, [captureActive]);

@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid';
 import Tesseract from 'tesseract.js';
 import { Peer } from 'peerjs';
 import { objectiveParser, rewardParser } from '@/lib/parser';
+import { findDuplicateContract, ContractData } from '@/lib/contractComparison';
 
 function sharpenCanvas(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext('2d');
@@ -147,12 +148,23 @@ const CapturePeerHandler = forwardRef<CapturePeerHandlerRef, CapturePeerHandlerP
       zonesRef.current.objective.x, zonesRef.current.objective.y, zonesRef.current.objective.width, zonesRef.current.objective.height,
       0, 0, zonesRef.current.objective.width, zonesRef.current.objective.height
     );
-    // Sharpen reward and objective canvases
+    // Extract text from contract name zone
+    const contractNameCanvas = document.createElement('canvas');
+    const contractNameContext = contractNameCanvas.getContext('2d');
+    contractNameCanvas.width = zonesRef.current.contractName.width;
+    contractNameCanvas.height = zonesRef.current.contractName.height;
+    contractNameContext.drawImage(
+      video,
+      zonesRef.current.contractName.x, zonesRef.current.contractName.y, zonesRef.current.contractName.width, zonesRef.current.contractName.height,
+      0, 0, zonesRef.current.contractName.width, zonesRef.current.contractName.height
+    );
+    // Sharpen reward, objective, and contract name canvases
     sharpenCanvas(rewardCanvas);
     sharpenCanvas(objectiveCanvas);
+    sharpenCanvas(contractNameCanvas);
     try {
       // Restart scheduler after 100 jobs
-      jobCountRef.current += 2;
+      jobCountRef.current += 3;
       if (jobCountRef.current > 100) {
         if (!reinitPromiseRef.current) {
           reinitPromiseRef.current = (async () => {
@@ -164,9 +176,10 @@ const CapturePeerHandler = forwardRef<CapturePeerHandlerRef, CapturePeerHandlerP
         await reinitPromiseRef.current;
       }
       const scheduler = schedulerRef.current;
-      const [rewardText, objectiveText] = await Promise.all([
+      const [rewardText, objectiveText, contractNameText] = await Promise.all([
         scheduler.addJob('recognize', rewardCanvas.toDataURL(), 'eng'),
-        scheduler.addJob('recognize', objectiveCanvas.toDataURL(), 'eng')
+        scheduler.addJob('recognize', objectiveCanvas.toDataURL(), 'eng'),
+        scheduler.addJob('recognize', contractNameCanvas.toDataURL(), 'eng')
       ]);
       const id = nanoid(5);
       if (isDebugEnabled) {
@@ -175,7 +188,8 @@ const CapturePeerHandler = forwardRef<CapturePeerHandlerRef, CapturePeerHandlerP
             ...prev,
             [id]: {
               reward: rewardCanvas.toDataURL(),
-              objective: objectiveCanvas.toDataURL()
+              objective: objectiveCanvas.toDataURL(),
+              contractName: contractNameCanvas.toDataURL()
             }
           };
         });
@@ -195,15 +209,31 @@ const CapturePeerHandler = forwardRef<CapturePeerHandlerRef, CapturePeerHandlerP
         return;
       }
       setErrorMessage('');
-      setExtractedData(prevData => [
-        ...prevData, 
-        { 
-          id,
-          timestamp: new Date().toLocaleString(),
-          reward: rewardParser(rewardText.data.text.trim()),
-          objective: objectiveParser(objectiveText.data.text.trim())
+      const newRecord: ContractData = { 
+        id,
+        timestamp: new Date().toLocaleString(),
+        reward: rewardParser(rewardText.data.text.trim()),
+        objective: objectiveParser(objectiveText.data.text.trim()),
+        contractName: contractNameText.data.text.trim()
+      };
+      
+      // Check for duplicates before adding
+      const existingContracts = extractedDataRef.current;
+      const duplicateContract = findDuplicateContract(newRecord, existingContracts);
+      
+      if (duplicateContract) {
+        const duplicateMessage = `Duplicate contract detected: "${newRecord.contractName}" (Reward: ${newRecord.reward})`;
+        if (connRef.current) {
+          connRef.current.send({ type: 'error', message: duplicateMessage });
         }
-      ]);
+        setErrorMessage(duplicateMessage);
+        return;
+      }
+      
+      setExtractedData(prevData => {
+        const updatedData = [...prevData, newRecord];
+        return updatedData;
+      });
     } catch (error) {
       console.error('Error extracting text:', error);
       setErrorMessage(error.message);
