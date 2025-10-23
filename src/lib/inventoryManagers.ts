@@ -108,6 +108,11 @@ export class ShipInventoryManager {
     return true;
   }
 
+  forcePickup(itemName: string, quantity: number): void {
+    const current = this.currentCargo.get(itemName) || 0;
+    this.currentCargo.set(itemName, current + quantity);
+  }
+
   dropoff(itemName: string, quantity: number): boolean {
     const current = this.currentCargo.get(itemName) || 0;
     if (current < quantity) return false;

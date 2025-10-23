@@ -3,12 +3,15 @@ import { data as allEntitiesData, locationTypes, AllEntities } from '@/data/AllE
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Search, Settings, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { loadFromStorage } from '@/lib/storage';
 import { cleanStationNameForMatching, cleanLocationName } from '@/lib/locationUtils';
 import Navbar from '@/components/layout/Navbar';
 import RoutePlanner from '@/components/routes/RoutePlanner';
 import { RouteStop } from '@/types/routePlanner';
+import Record from '@/components/contracts/Record';
 
 // Canvas constants
 const POINT_RADIUS = 6;
@@ -54,6 +57,8 @@ const RoutesPage = () => {
   const [contractSearchQuery, setContractSearchQuery] = useState('');
   const [routeStops, setRouteStops] = useState<RouteStop[]>([]);
   const [startingLocationId, setStartingLocationId] = useState<number | null>(null);
+  const [isManageDialogOpen, setIsManageDialogOpen] = useState(false);
+  const [isContractsSidebarCollapsed, setIsContractsSidebarCollapsed] = useState(false);
   
   // Location type toggle states
   const [locationTypeToggles, setLocationTypeToggles] = useState({
@@ -798,9 +803,51 @@ const RoutesPage = () => {
       <Navbar />
       <div className="flex w-full h-[calc(100vh-5rem)] overflow-hidden">
         {/* Contracts Sidebar */}
-        <div className="w-96 bg-gray-800/50 backdrop-blur-sm border-r border-gray-700 flex flex-col flex-shrink-0">
-          <div className="p-4 border-b border-gray-700">
-            <h2 className="text-lg font-bold text-white mb-2">Contracts</h2>
+        <div className={`bg-gray-800/50 backdrop-blur-sm border-r border-gray-700 flex flex-col flex-shrink-0 transition-all duration-300 ${isContractsSidebarCollapsed ? 'w-12' : 'w-96'}`}>
+          {isContractsSidebarCollapsed ? (
+            <div className="flex flex-col items-center py-4">
+              <Button
+                onClick={() => setIsContractsSidebarCollapsed(false)}
+                variant="ghost"
+                size="sm"
+                className="text-gray-400 hover:text-white hover:bg-gray-700"
+                title="Expand Contracts"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+              <div 
+                className="text-xs text-gray-400 mt-4"
+                style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+              >
+                Contracts ({contracts.length})
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="p-4 border-b border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-lg font-bold text-white">Contracts</h2>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      onClick={() => setIsManageDialogOpen(true)}
+                      variant="outline" 
+                      size="sm"
+                      className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10"
+                    >
+                      <Settings className="mr-2 h-3 w-3" />
+                      Manage
+                    </Button>
+                    <Button
+                      onClick={() => setIsContractsSidebarCollapsed(true)}
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-400 hover:text-white"
+                      title="Collapse Contracts"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
             <div className="relative mb-3">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -808,8 +855,16 @@ const RoutesPage = () => {
                 placeholder="Search locations or items..."
                 value={contractSearchQuery}
                 onChange={(e) => setContractSearchQuery(e.target.value)}
-                className="pl-9 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
+                className="pl-9 pr-9 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
               />
+              {contractSearchQuery && (
+                <button
+                  onClick={() => setContractSearchQuery('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
             <div className="text-sm text-gray-300">
               {(() => {
@@ -983,6 +1038,8 @@ const RoutesPage = () => {
               </div>
             )}
           </div>
+            </>
+          )}
         </div>
         
         {/* Main Map Area */}
@@ -1100,6 +1157,16 @@ const RoutesPage = () => {
           }}
         />
       </div>
+      
+      <Dialog open={isManageDialogOpen} onOpenChange={setIsManageDialogOpen}>
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto bg-gray-900 border-blue-500/30">
+          <DialogHeader>
+            <DialogTitle className="text-2xl text-blue-400">Manage Contracts</DialogTitle>
+          </DialogHeader>
+          <Record />
+        </DialogContent>
+      </Dialog>
+      
       <Toaster />
       <Sonner />
     </div>

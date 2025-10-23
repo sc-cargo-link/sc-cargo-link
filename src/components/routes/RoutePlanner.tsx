@@ -40,10 +40,64 @@ const RoutePlanner: React.FC<RoutePlannerProps> = ({ contracts, onRouteChange })
   const [openStartingLocation, setOpenStartingLocation] = useState(false);
   const [openAddStation, setOpenAddStation] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [stationErrors, setStationErrors] = useState<string[]>([]);
 
   // Initialize inventory managers
   const stationManager = useMemo(() => new StationInventoryManager(), []);
   const shipManager = useMemo(() => new ShipInventoryManager(cargoSpace), [cargoSpace]);
+
+  // Calculate pending deliveries
+  const pendingDeliveries = useMemo(() => {
+    // Get all required deliveries from contracts
+    const requiredDeliveries = new Map<string, { item: string; quantity: number; location: string }[]>();
+    
+    contracts.forEach(contract => {
+      contract.deliveries.forEach(delivery => {
+        const key = `${delivery.location}|${contract.item}`;
+        if (!requiredDeliveries.has(key)) {
+          requiredDeliveries.set(key, []);
+        }
+        requiredDeliveries.get(key)!.push({
+          item: contract.item,
+          quantity: delivery.quantity,
+          location: delivery.location
+        });
+      });
+    });
+
+    // Calculate what has been delivered through route stops
+    const deliveredItems = new Map<string, number>();
+    
+    routeStops.forEach(stop => {
+      stop.dropoffs.forEach(dropoff => {
+        const entity = allEntitiesData.find(e => e.id === stop.stationId);
+        if (entity) {
+          const key = `${stop.stationName}|${dropoff.itemName}`;
+          const current = deliveredItems.get(key) || 0;
+          deliveredItems.set(key, current + dropoff.quantity);
+        }
+      });
+    });
+
+    // Calculate pending items
+    const pending: Array<{ item: string; quantity: number; location: string }> = [];
+    
+    requiredDeliveries.forEach((deliveries, key) => {
+      const totalRequired = deliveries.reduce((sum, d) => sum + d.quantity, 0);
+      const delivered = deliveredItems.get(key) || 0;
+      const remaining = totalRequired - delivered;
+      
+      if (remaining > 0) {
+        pending.push({
+          item: deliveries[0].item,
+          quantity: remaining,
+          location: deliveries[0].location
+        });
+      }
+    });
+
+    return pending;
+  }, [contracts, routeStops]);
 
   // Get unique contract locations
   const contractLocations = useMemo(() => {
@@ -127,6 +181,20 @@ const RoutePlanner: React.FC<RoutePlannerProps> = ({ contracts, onRouteChange })
           ...stop,
           pickupSelections: new Map(Object.entries(stop.pickupSelections || {}))
         }));
+        
+        // Validate that all stations still exist
+        const errors: string[] = [];
+        restoredStops.forEach((stop: RouteStop) => {
+          const entity = allEntitiesData.find(e => e.id === stop.stationId);
+          if (!entity) {
+            errors.push(`Station "${stop.stationName}" (ID: ${stop.stationId}) no longer exists in the system`);
+          }
+        });
+        
+        if (errors.length > 0) {
+          setStationErrors(errors);
+        }
+        
         setRouteStops(restoredStops);
       }
     }
@@ -173,6 +241,19 @@ const RoutePlanner: React.FC<RoutePlannerProps> = ({ contracts, onRouteChange })
   const recalculateRoute = (stopsToCalculate: RouteStop[] = routeStops) => {
     if (stopsToCalculate.length === 0) return stopsToCalculate;
     
+    // Validate all stations exist
+    const errors: string[] = [];
+    stopsToCalculate.forEach(stop => {
+      const entity = allEntitiesData.find(e => e.id === stop.stationId);
+      if (!entity) {
+        errors.push(`Station "${stop.stationName}" (ID: ${stop.stationId}) not found in the system`);
+      }
+    });
+    
+    if (errors.length > 0) {
+      setStationErrors(errors);
+    }
+    
     const stationManagerCopy = stationManager.clone();
     const shipManagerCopy = new ShipInventoryManager(cargoSpace);
 
@@ -214,11 +295,12 @@ const RoutePlanner: React.FC<RoutePlannerProps> = ({ contracts, onRouteChange })
         stationManagerCopy.addDropoff(stop.stationId, dropoff.itemName, dropoff.quantity);
       });
 
-      // Process pickups based on selections
+      // Process pickups based on selections (allow exceeding capacity)
       availablePickups.forEach(pickup => {
         const isSelected = stop.pickupSelections.get(pickup.itemName) || false;
-        if (isSelected && shipManagerCopy.canPickup(pickup.itemName, pickup.quantity)) {
-          shipManagerCopy.pickup(pickup.itemName, pickup.quantity);
+        if (isSelected) {
+          // Force pickup regardless of capacity - let user see the overflow
+          shipManagerCopy.forcePickup(pickup.itemName, pickup.quantity);
           stationManagerCopy.consumePickup(stop.stationId, pickup.itemName, pickup.quantity);
         }
       });
@@ -239,7 +321,20 @@ const RoutePlanner: React.FC<RoutePlannerProps> = ({ contracts, onRouteChange })
   };
 
   const handleAddStation = (locationName: string, entityId: number | null) => {
-    if (!entityId) return;
+    if (!entityId) {
+      setStationErrors([`Cannot add station "${locationName}": Station not found in the system`]);
+      return;
+    }
+
+    // Verify the entity exists
+    const entity = allEntitiesData.find(e => e.id === entityId);
+    if (!entity) {
+      setStationErrors([`Cannot add station "${locationName}": Station with ID ${entityId} not found in the system`]);
+      return;
+    }
+
+    // Clear any previous errors
+    setStationErrors([]);
 
     const newStop: RouteStop = {
       id: `${entityId}-${Date.now()}`,
@@ -259,7 +354,13 @@ const RoutePlanner: React.FC<RoutePlannerProps> = ({ contracts, onRouteChange })
   };
 
   const handleRemoveStation = (stopId: string) => {
-    setRouteStops(routeStops.filter(stop => stop.id !== stopId));
+    const updatedStops = routeStops.filter(stop => stop.id !== stopId);
+    setRouteStops(updatedStops);
+    
+    // Clear errors if all problematic stations are removed
+    if (updatedStops.length === 0) {
+      setStationErrors([]);
+    }
   };
 
   const handlePickupToggle = (stopId: string, itemName: string, checked: boolean) => {
@@ -304,6 +405,39 @@ const RoutePlanner: React.FC<RoutePlannerProps> = ({ contracts, onRouteChange })
     <div className="w-96 bg-gray-800/50 backdrop-blur-sm border-l border-gray-700 flex flex-col flex-shrink-0">
       <div className="p-4 border-b border-gray-700">
         <h2 className="text-lg font-bold text-white mb-4">Route Planner</h2>
+        
+        {/* Error Messages */}
+        {stationErrors.length > 0 && (
+          <div className="mb-4 space-y-2">
+            {stationErrors.map((error, index) => (
+              <div 
+                key={index}
+                className="bg-red-900/50 border border-red-600 rounded-lg p-3 flex items-start gap-2"
+              >
+                <svg 
+                  className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" 
+                  fill="currentColor" 
+                  viewBox="0 0 20 20"
+                >
+                  <path 
+                    fillRule="evenodd" 
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" 
+                    clipRule="evenodd" 
+                  />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-sm text-red-200">{error}</p>
+                </div>
+                <button
+                  onClick={() => setStationErrors(prev => prev.filter((_, i) => i !== index))}
+                  className="text-red-400 hover:text-red-300 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         
         {/* Starting Location */}
         <div className="mb-4">
@@ -376,7 +510,10 @@ const RoutePlanner: React.FC<RoutePlannerProps> = ({ contracts, onRouteChange })
                 onDragOver={(e) => handleDragOver(e, index)}
                 onDragEnd={handleDragEnd}
                 className={cn(
-                  "bg-gray-700/50 rounded-lg p-3 border border-gray-600 cursor-move",
+                  "bg-gray-700/50 rounded-lg p-3 cursor-move",
+                  stop.currentSCU > cargoSpace 
+                    ? "border-2 border-red-500" 
+                    : "border border-gray-600",
                   draggedIndex === index && "opacity-50"
                 )}
               >
@@ -385,8 +522,14 @@ const RoutePlanner: React.FC<RoutePlannerProps> = ({ contracts, onRouteChange })
                     <GripVertical className="w-4 h-4 text-gray-400 mt-1 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="text-white font-medium text-sm">{stop.stationName}</div>
-                      <div className="text-gray-400 text-xs">
+                      <div className={cn(
+                        "text-xs",
+                        stop.currentSCU > cargoSpace ? "text-red-400 font-semibold" : "text-gray-400"
+                      )}>
                         SCU: {stop.currentSCU}/{cargoSpace}
+                        {stop.currentSCU > cargoSpace && (
+                          <span className="ml-2 text-red-400">⚠ Over capacity!</span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -494,6 +637,42 @@ const RoutePlanner: React.FC<RoutePlannerProps> = ({ contracts, onRouteChange })
               </PopoverContent>
             </Popover>
           </div>
+
+          {/* Pending Deliveries Summary */}
+          {pendingDeliveries.length > 0 && (
+            <div className="mt-4 bg-yellow-900/30 border border-yellow-600/50 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <div className="text-sm font-semibold text-yellow-300">
+                  Pending Deliveries: {pendingDeliveries.length}
+                </div>
+              </div>
+              <div className="space-y-1 ml-6 max-h-32 overflow-y-auto">
+                {pendingDeliveries.map((pending, index) => (
+                  <div key={index} className="text-xs text-yellow-200">
+                    <span className="font-medium">{pending.item}</span>: {pending.quantity} SCU
+                    <span className="text-yellow-400/80"> → {pending.location}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* All Deliveries Complete Message */}
+          {routeStops.length > 0 && pendingDeliveries.length === 0 && contracts.length > 0 && (
+            <div className="mt-4 bg-green-900/30 border border-green-600/50 rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <div className="text-sm font-semibold text-green-300">
+                  All deliveries completed!
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </ScrollArea>
     </div>

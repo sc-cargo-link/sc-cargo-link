@@ -4,7 +4,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { X, Edit, Plus, Trash } from 'lucide-react';
+import { X, Edit, Plus, Trash, Search } from 'lucide-react';
 
 interface RecordsTableProps {
   records: Array<{
@@ -187,6 +187,7 @@ const EditDialog: React.FC<EditDialogProps> = ({ record, onSave, onClose }) => {
 
 const RecordsTable: React.FC<RecordsTableProps> = ({ records, debugImages, onUpdate }) => {
   const [editingRecord, setEditingRecord] = useState<RecordsTableProps['records'][0] | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleRemoveRecord = (recordId: string) => {
     const updatedRecords = records.filter(record => record.id !== recordId);
@@ -201,9 +202,48 @@ const RecordsTable: React.FC<RecordsTableProps> = ({ records, debugImages, onUpd
     setEditingRecord(null);
   };
 
+  const filteredRecords = records.filter(record => {
+    if (!searchQuery.trim()) return true;
+    
+    const query = searchQuery.toLowerCase();
+    const rewardMatch = record.reward.toString().includes(query);
+    const objectiveMatch = record.objective.some(obj => {
+      const itemMatch = obj.item.toLowerCase().includes(query);
+      const locationMatch = obj.location.toLowerCase().includes(query);
+      const deliveryMatch = obj.deliveries?.some(del => 
+        del.location.toLowerCase().includes(query)
+      );
+      return itemMatch || locationMatch || deliveryMatch;
+    });
+    
+    return rewardMatch || objectiveMatch;
+  });
+
   return (
     <div className="bg-black/30 rounded-lg p-4 border border-neon-blue/30">
       <h3 className="text-lg font-semibold text-white mb-4">Extracted Information</h3>
+      {records.length > 0 && (
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search by item, location, or reward..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-10 bg-white/10 border border-white/20 focus:bg-white/20 focus:border-neon-blue/50 transition-colors text-white placeholder:text-gray-400"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0 hover:bg-white/10"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      )}
       {records.length > 0 ? (
         <div className="overflow-x-auto">
           <Table>
@@ -215,7 +255,7 @@ const RecordsTable: React.FC<RecordsTableProps> = ({ records, debugImages, onUpd
               </TableRow>
             </TableHeader>
             <TableBody>
-              {records
+              {filteredRecords
                 .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
                 .map((item) => (
                   <TableRow key={item.id}>
