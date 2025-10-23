@@ -80,6 +80,17 @@ const Navbar = () => {
               <MapPin className="h-5 w-5 mr-2" />
               Route Planning
             </Link>
+            <Link
+              to="/locations"
+              className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                location.pathname === '/locations' 
+                  ? 'text-neon-blue bg-space-medium' 
+                  : 'text-gray-300 hover:text-neon-blue'
+              }`}
+            >
+              <MapPin className="h-5 w-5 mr-2" />
+              Locations
+            </Link>
           </div>
         </div>
       </div>

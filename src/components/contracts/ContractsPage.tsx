@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Trash, Search, Plus } from 'lucide-react';
+import { Trash, Search, Plus, X } from 'lucide-react';
 import { loadFromStorage, saveToStorage } from '@/lib/storage';
 
 type ExtractedRecord = {
@@ -106,12 +106,12 @@ const ContractsPage = () => {
       const filteredGroup = contractGroup.filter(c => {
         const matchesSearch =
           q === '' ||
-          c.item.toLowerCase().includes(q) ||
-          c.source.toLowerCase().includes(q) ||
-          (c.contractName && c.contractName.toLowerCase().includes(q)) ||
-          c.deliveries.some(del => del.location.toLowerCase().includes(q)) ||
-          c.deliveries.some(del => String(del.quantity).includes(q)) ||
-          String(c.reward).includes(q);
+          c.item.toLowerCase() === q ||
+          c.source.toLowerCase() === q ||
+          (c.contractName && c.contractName.toLowerCase() === q) ||
+          c.deliveries.some(del => del.location.toLowerCase() === q) ||
+          c.deliveries.some(del => String(del.quantity) === q) ||
+          String(c.reward) === q;
         const matchesStatus = statusFilter === 'all' || c.status === statusFilter;
         return matchesSearch && matchesStatus;
       });
@@ -223,10 +223,18 @@ const ContractsPage = () => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
             placeholder="Search contracts..."
-            className="pl-10 bg-space-medium border-neon-blue/20 focus:border-neon-blue"
+            className="pl-10 pr-10 bg-space-medium border-neon-blue/20 focus:border-neon-blue"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
         <div>
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
@@ -302,10 +310,25 @@ const ContractsPage = () => {
                                   onCheckedChange={() => toggleContractCompleted(contract.id)}
                                   className="mr-2"
                                 />
-                                <span className="text-white font-medium">{contract.item}</span>
-                                <span className="text-gray-400">{contract.source}</span>
+                                <span 
+                                  className="text-white font-medium cursor-pointer hover:text-neon-blue transition-colors"
+                                  onClick={() => setSearchQuery(contract.item)}
+                                >
+                                  {contract.item}
+                                </span>
+                                <span 
+                                  className="text-gray-400 cursor-pointer hover:text-neon-blue transition-colors"
+                                  onClick={() => setSearchQuery(contract.source)}
+                                >
+                                  {contract.source}
+                                </span>
                                 <span className="text-gray-400">→</span>
-                                <span className="text-white">{delivery.location}</span>
+                                <span 
+                                  className="text-white cursor-pointer hover:text-neon-blue transition-colors"
+                                  onClick={() => setSearchQuery(delivery.location)}
+                                >
+                                  {delivery.location}
+                                </span>
                                 <span className="text-neon-blue text-xs">({delivery.quantity} SCU)</span>
                               </div>
                             ))
@@ -316,7 +339,19 @@ const ContractsPage = () => {
                                 onCheckedChange={() => toggleContractCompleted(contract.id)}
                                 className="mr-2"
                               />
-                              {contract.item} {contract.source} - No deliveries specified
+                              <span 
+                                className="cursor-pointer hover:text-neon-blue transition-colors"
+                                onClick={() => setSearchQuery(contract.item)}
+                              >
+                                {contract.item}
+                              </span>
+                              <span 
+                                className="cursor-pointer hover:text-neon-blue transition-colors"
+                                onClick={() => setSearchQuery(contract.source)}
+                              >
+                                {contract.source}
+                              </span>
+                              <span> - No deliveries specified</span>
                             </div>
                           )}
                         </div>
