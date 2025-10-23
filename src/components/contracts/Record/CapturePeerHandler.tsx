@@ -94,7 +94,6 @@ const CapturePeerHandler = forwardRef<CapturePeerHandlerRef, CapturePeerHandlerP
   };
 
   const terminateScheduler = async () => {
-    console.log("terminateScheduler");
     if (schedulerRef.current) {
       await schedulerRef.current.terminate();
       schedulerRef.current = null;
@@ -235,7 +234,6 @@ const CapturePeerHandler = forwardRef<CapturePeerHandlerRef, CapturePeerHandlerP
         return updatedData;
       });
     } catch (error) {
-      console.error('Error extracting text:', error);
       setErrorMessage(error.message);
     }
   };
@@ -245,7 +243,6 @@ const CapturePeerHandler = forwardRef<CapturePeerHandlerRef, CapturePeerHandlerP
     connRef.current = conn;
     let interval = null;
     conn.on('data', (data) => {
-      console.log("data", data);
       if (data.type === 'capture-request') {
         captureScreen();
       }

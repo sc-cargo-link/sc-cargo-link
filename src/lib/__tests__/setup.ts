@@ -1,21 +1,6 @@
 // Test setup file
 // This file runs before each test file
 
-import { beforeEach, afterEach, vi } from 'vitest';
-
-// Mock console methods to avoid cluttering test output
-beforeEach(() => {
-  // Suppress console.log during tests unless explicitly testing logging
-  vi.spyOn(console, 'log').mockImplementation(() => {});
-  vi.spyOn(console, 'warn').mockImplementation(() => {});
-  vi.spyOn(console, 'error').mockImplementation(() => {});
-});
-
-afterEach(() => {
-  // Restore console after each test
-  vi.restoreAllMocks();
-});
-
 // Global test utilities
 global.testUtils = {
   createMockContract: (overrides = {}) => ({

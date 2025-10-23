@@ -214,8 +214,6 @@ export class RouteOptimizationService {
           cargoOnBoard,
           cumulativeDistance: totalDistance + bestNext.distance
         });
-        
-        console.log(`PICKUP: ${bestNext.contract.item} at ${currentLocation.ObjectContainer}, cargo: ${cargoOnBoard}`);
       } else {
         const destCoords = this.findLocationCoordinates(bestNext.contract.destination)!;
         currentLocation = destCoords;
@@ -231,8 +229,6 @@ export class RouteOptimizationService {
           cargoOnBoard,
           cumulativeDistance: totalDistance + bestNext.distance
         });
-        
-        console.log(`DELIVER: ${bestNext.contract.item} at ${currentLocation.ObjectContainer}, cargo: ${cargoOnBoard}`);
       }
 
       totalDistance += bestNext.distance;
@@ -344,8 +340,6 @@ export class RouteOptimizationService {
             cargoOnBoard,
             cumulativeDistance: totalDistance
           });
-          
-          console.log(`PICKUP: ${contract.item} at ${currentLocation.ObjectContainer}, cargo: ${cargoOnBoard}`);
         }
       }
 
@@ -364,8 +358,6 @@ export class RouteOptimizationService {
             cargoOnBoard,
             cumulativeDistance: totalDistance
           });
-          
-          console.log(`DELIVER: ${contract.item} at ${currentLocation.ObjectContainer}, cargo: ${cargoOnBoard}`);
         }
       }
     }

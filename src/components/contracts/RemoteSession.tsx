@@ -6,7 +6,6 @@ import { Peer } from 'peerjs';
 import RecordsTable from '@/components/contracts/RecordsTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import { log } from 'console';
 
 const RemoteSession = () => {
   const [sessionId, setSessionId] = useState('');
@@ -77,7 +76,6 @@ const RemoteSession = () => {
       setLoading(false);
     });
     connection.on('data', (data) => {
-      console.log("data", data);
       if (data.type === 'records') {
         setRecords(data.records);
         setDebugImages(data.debugImages || {});
@@ -94,7 +92,6 @@ const RemoteSession = () => {
 
   const handleConnect = (id = undefined) => {
     const connectId = id || sessionId;
-    console.log("handleConnect", connectId);
     if (!connectId) return;
     setLoading(true);
     if (!peerRef.current || peerRef.current.disconnected) {
@@ -121,7 +118,6 @@ const RemoteSession = () => {
 
   const handleCapture = () => {
     if (conn && connected) {
-      console.log("Sending capture request");
       conn.send({ type: 'capture-request' });
     }
   };

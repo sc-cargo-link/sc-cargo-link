@@ -13,7 +13,6 @@ This test suite provides comprehensive coverage for the `RouteOptimizationServic
 5. **Minimum Stops Optimization** - Tests location grouping approach
 6. **Edge Cases** - Handles empty lists, invalid locations, zero capacity
 7. **Route Statistics** - Validates reward calculation and cargo utilization
-8. **Console Logging** - Ensures proper debug output
 
 ### 🧪 Test Cases
 
@@ -48,8 +47,6 @@ This test suite provides comprehensive coverage for the `RouteOptimizationServic
 - ✅ Calculates cargo utilization correctly
 - ✅ Includes start action in route
 
-#### Console Logging Tests
-- ✅ Logs pickup and delivery actions
 
 ## Running Tests
 
@@ -119,9 +116,8 @@ Comprehensive testing of boundary conditions and error scenarios.
 If tests fail, check:
 
 1. **Mock Data**: Ensure mock locations match contract source/destination names
-2. **Console Output**: Check for pickup/delivery logging
-3. **Route Structure**: Verify route steps are in correct order
-4. **Cargo Tracking**: Ensure cargo never exceeds capacity
+2. **Route Structure**: Verify route steps are in correct order
+3. **Cargo Tracking**: Ensure cargo never exceeds capacity
 
 ## Contributing
 

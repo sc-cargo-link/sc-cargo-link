@@ -473,32 +473,4 @@ describe('RouteOptimizationService', () => {
     });
   });
 
-  describe('Console Logging', () => {
-    it('should log pickup and delivery actions', () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-      const result = routeOptimizationService.generateOptimizedRoute(
-        [mockContracts[0]],
-        mockStartingLocation,
-        50,
-        'distance'
-      );
-
-      expect(result).not.toBeNull();
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('PICKUP:'),
-        expect.any(String),
-        expect.any(String),
-        expect.any(Number)
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('DELIVER:'),
-        expect.any(String),
-        expect.any(String),
-        expect.any(Number)
-      );
-
-      consoleSpy.mockRestore();
-    });
-  });
 });

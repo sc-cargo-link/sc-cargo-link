@@ -90,12 +90,6 @@ const RoutePlanningPage = () => {
   );
 
   const generateRoutePlans = () => {
-    console.log('Starting location query:', startingLocationQuery);
-    console.log('Location matches:', locationMatches);
-    console.log('Selected starting location:', selectedStartingLocation);
-    console.log('Optimization type:', optimizationType);
-    console.log('Flattened contracts:', flattenedContracts.length);
-    
     if (!selectedStartingLocation) {
       alert('Please select a starting location from the search results.');
       return;
@@ -115,8 +109,6 @@ const RoutePlanningPage = () => {
     const matchedContracts: string[] = [];
 
     for (const contract of flattenedContracts) {
-      console.log(`Processing contract: ${contract.item} from ${contract.source} to ${contract.destination}`);
-      
       // Use a simple check since we can't access private methods
       const sourceCoords = containerData.find(item => 
         item.ObjectContainer.toLowerCase().includes(contract.source.toLowerCase()) ||
@@ -132,11 +124,7 @@ const RoutePlanningPage = () => {
         item.PoiName.toLowerCase().includes(contract.destination.toLowerCase())
       );
 
-      console.log(`Source coords for ${contract.source}:`, sourceCoords);
-      console.log(`Dest coords for ${contract.destination}:`, destCoords);
-
       if (!sourceCoords || !destCoords) {
-        console.log(`Skipping contract ${contract.item} - missing coordinates`);
         if (!sourceCoords) unmatchedLocations.push(`Source: ${contract.source}`);
         if (!destCoords) unmatchedLocations.push(`Destination: ${contract.destination}`);
         continue;
@@ -144,9 +132,6 @@ const RoutePlanningPage = () => {
 
       matchedContracts.push(`${contract.item}: ${contract.source} → ${contract.destination}`);
     }
-
-    console.log('Unmatched locations:', unmatchedLocations);
-    console.log('Matched contracts:', matchedContracts);
     
     // Store debug info for display
     setDebugInfo({

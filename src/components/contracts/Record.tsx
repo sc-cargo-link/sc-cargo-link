@@ -82,7 +82,6 @@ const Record = () => {
       setIsCreateSessionDialogOpen(false);
       setSessionName('');
     } catch (error) {
-      console.error('Error creating session:', error);
       toast({
         title: "Error",
         description: "Failed to create session",
@@ -95,7 +94,6 @@ const Record = () => {
   const cleanStationNames = (records: any[]) => {
     // Ensure records is an array
     if (!Array.isArray(records)) {
-      console.warn('cleanStationNames: records is not an array:', records);
       return [];
     }
     
@@ -170,7 +168,6 @@ const Record = () => {
   const handleUpdateRecords = (updatedRecords: any) => {
     // Ensure we have valid records data
     if (!updatedRecords) {
-      console.warn('handleUpdateRecords: updatedRecords is null/undefined');
       return;
     }
     
@@ -198,11 +195,6 @@ const Record = () => {
   useEffect(() => { extractedDataRef.current = extractedData; }, [extractedData]);
   useEffect(() => { debugImagesRef.current = debugImages; }, [debugImages]);
   useEffect(() => { zonesRef.current = zones; }, [zones]);
-  
-  // Log zones to console when they change
-  useEffect(() => {
-    console.log('Zones updated:', zones);
-  }, [zones]);
 
   // Persist extracted records to localStorage whenever they change
   useEffect(() => {
@@ -213,7 +205,7 @@ const Record = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-white">Record Contract</h1>
+          <h4 className="text-xl font-bold text-white">Record Contract</h4>
         </div>
         <div className="flex items-center space-x-2">
           <Switch id="debug-mode" checked={isDebugEnabled} onCheckedChange={toggleDebug} />
@@ -229,8 +221,6 @@ const Record = () => {
         onCaptureActiveChange={setCaptureActive}
         videoRef={videoRef}
       />
-
-      <DebugImagesViewer isDebugEnabled={isDebugEnabled} debugImages={debugImages} />
 
       <div className="holographic-panel rounded-lg p-6 border border-neon-blue/20 space-y-4">
         <h2 className="text-xl font-bold text-neon-blue">Record</h2>

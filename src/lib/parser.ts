@@ -60,7 +60,6 @@ const extractDeliver = (line: string) => {
 // ¢ Deliver 0/42 SCU to Seraphim Station.
 // ¢ Deliver 0/52 SCU to Baijini Point.
 const objectiveParser = (objective: string) => {
-    console.log("objective", objective);
     // break it into lines using '\n'
     const lines = objective.split('\n');
     // split them into jobs. A job has collect then followed by 1 or more lines with deliver
