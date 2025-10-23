@@ -1,15 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Camera } from 'lucide-react';
-import { useDebug } from '@/contexts/DebugContext';
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { contractService } from '@/lib/contractService';
 import { Contract } from '@/lib/db';
 import { toast } from "@/components/ui/use-toast";
 import RecordsTable from '@/components/contracts/RecordsTable';
 import humanId from 'human-id';
-import DebugImagesViewer from '@/components/contracts/Record/DebugImagesViewer';
 import CreateSessionDialog from '@/components/contracts/Record/CreateSessionDialog';
 import Setup from '@/components/contracts/Record/Setup';
 import CapturePeerHandler, { CapturePeerHandlerRef } from '@/components/contracts/Record/CapturePeerHandler';
@@ -19,11 +15,9 @@ import { data as locationData, LocationData } from '@/data/LocationData';
 const Record = () => {
   // States
   const [captureActive, setCaptureActive] = useState(false);
-  const [debugImages, setDebugImages] = useState<{[key: string]: { reward: string; objective: string; }}>({});
   const [errorMessage, setErrorMessage] = useState('');
   const [extractedData, setExtractedData] = useState(() => loadFromStorage('extractedData', []));
   const [isCreateSessionDialogOpen, setIsCreateSessionDialogOpen] = useState(false);
-  const { isDebugEnabled, toggleDebug } = useDebug();
   const [sessionName, setSessionName] = useState('');
   const [sessionId, setSessionId] = useState(humanId({
     capitalize: false,
@@ -41,7 +35,6 @@ const Record = () => {
   const canvasRef = useRef(null);
   const peerRef = React.useRef<any>(null) as React.MutableRefObject<any>;
   const extractedDataRef = useRef(extractedData);
-  const debugImagesRef = useRef(debugImages);
   const zonesRef = useRef(zones);
   const [isSetupOpen, setIsSetupOpen] = useState(true);
   const capturePeerHandlerRef = useRef<CapturePeerHandlerRef>(null);
@@ -49,7 +42,6 @@ const Record = () => {
   
   const handleClearRecords = () => {
     setExtractedData([]);
-    setDebugImages({});
     removeFromStorage('extractedData');
   };
 
@@ -193,7 +185,6 @@ const Record = () => {
   };
 
   useEffect(() => { extractedDataRef.current = extractedData; }, [extractedData]);
-  useEffect(() => { debugImagesRef.current = debugImages; }, [debugImages]);
   useEffect(() => { zonesRef.current = zones; }, [zones]);
 
   // Persist extracted records to localStorage whenever they change
@@ -206,10 +197,6 @@ const Record = () => {
       <div className="flex justify-between items-center">
         <div>
           <h4 className="text-xl font-bold text-white">Record Contract</h4>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Switch id="debug-mode" checked={isDebugEnabled} onCheckedChange={toggleDebug} />
-          <Label htmlFor="debug-mode">Debug Mode</Label>
         </div>
       </div>
 
@@ -239,7 +226,7 @@ const Record = () => {
               onClick={handleClearRecords}
               variant="outline"
               className="border-neon-blue/50 text-neon-blue hover:bg-neon-blue/10 ml-auto"
-              disabled={extractedData.length === 0 && Object.keys(debugImages).length === 0}
+              disabled={extractedData.length === 0}
             >
               Clear
             </Button>
@@ -251,7 +238,6 @@ const Record = () => {
           
           <RecordsTable 
             records={extractedData} 
-            debugImages={debugImages} 
             onUpdate={handleUpdateRecords}
           />
         </div>
@@ -272,11 +258,8 @@ const Record = () => {
         zonesRef={zonesRef}
         sessionId={sessionId}
         setExtractedData={handleSetExtractedData}
-        setDebugImages={setDebugImages}
         setErrorMessage={setErrorMessage}
-        isDebugEnabled={isDebugEnabled}
         extractedDataRef={extractedDataRef}
-        debugImagesRef={debugImagesRef}
         connRef={connRef}
         peerRef={peerRef}
       />

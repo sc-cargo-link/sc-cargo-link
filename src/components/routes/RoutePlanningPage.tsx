@@ -28,12 +28,6 @@ const RoutePlanningPage = () => {
   const [optimizationType, setOptimizationType] = useState<'distance' | 'min-stops'>('distance');
   const [optimizedRoute, setOptimizedRoute] = useState<OptimizedRoute | null>(null);
   const [records, setRecords] = useState<ExtractedRecord[]>([]);
-  const [debugInfo, setDebugInfo] = useState<{
-    unmatchedLocations: string[];
-    matchedContracts: string[];
-    totalContracts: number;
-    processedContracts: number;
-  } | null>(null);
 
   // Load contracts from storage
   useEffect(() => {
@@ -103,50 +97,12 @@ const RoutePlanningPage = () => {
       optimizationType
     );
     setOptimizedRoute(optimized);
-
-    // Track debug info for unmatched locations
-    const unmatchedLocations: string[] = [];
-    const matchedContracts: string[] = [];
-
-    for (const contract of flattenedContracts) {
-      // Use a simple check since we can't access private methods
-      const sourceCoords = containerData.find(item => 
-        item.ObjectContainer.toLowerCase().includes(contract.source.toLowerCase()) ||
-        item.InternalName.toLowerCase().includes(contract.source.toLowerCase())
-      ) || locationData.find(item => 
-        item.PoiName.toLowerCase().includes(contract.source.toLowerCase())
-      );
-      
-      const destCoords = containerData.find(item => 
-        item.ObjectContainer.toLowerCase().includes(contract.destination.toLowerCase()) ||
-        item.InternalName.toLowerCase().includes(contract.destination.toLowerCase())
-      ) || locationData.find(item => 
-        item.PoiName.toLowerCase().includes(contract.destination.toLowerCase())
-      );
-
-      if (!sourceCoords || !destCoords) {
-        if (!sourceCoords) unmatchedLocations.push(`Source: ${contract.source}`);
-        if (!destCoords) unmatchedLocations.push(`Destination: ${contract.destination}`);
-        continue;
-      }
-
-      matchedContracts.push(`${contract.item}: ${contract.source} → ${contract.destination}`);
-    }
-    
-    // Store debug info for display
-    setDebugInfo({
-      unmatchedLocations,
-      matchedContracts,
-      totalContracts: flattenedContracts.length,
-      processedContracts: matchedContracts.length
-    });
   };
 
   const clearPlans = () => {
     setOptimizedRoute(null);
     setStartingLocationQuery('');
     setStorageSCU(0);
-    setDebugInfo(null);
   };
 
   return (
@@ -159,7 +115,7 @@ const RoutePlanningPage = () => {
       </div>
 
       {/* Input Section - Top */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {/* Route Configuration */}
         <Card className="bg-space-medium border-neon-blue/20">
           <CardHeader>
@@ -258,56 +214,6 @@ const RoutePlanningPage = () => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Debug Info Panel */}
-        {process.env.NODE_ENV === 'development' && (
-          <Card className="bg-yellow-500/5 border-yellow-500/20">
-            <CardHeader>
-              <CardTitle className="text-yellow-300 text-sm">Debug Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-xs">
-                <div className="text-yellow-300 font-medium mb-2">Debug Info:</div>
-                <div>Starting Location Query: "{startingLocationQuery}"</div>
-                <div>Location Matches: {locationMatches.length}</div>
-                <div>Selected Starting Location: {selectedStartingLocation?.ObjectContainer || 'None'}</div>
-                <div>Available Contracts: {flattenedContracts.length}</div>
-                <div>Optimized Route: {optimizedRoute ? 'Generated' : 'Not Generated'}</div>
-                
-                {debugInfo && (
-                  <div className="mt-3 pt-2 border-t border-yellow-500/20">
-                    <div className="text-yellow-300 font-medium mb-1">Processing Results:</div>
-                    <div>Total Contracts: {debugInfo.totalContracts}</div>
-                    <div>Processed Contracts: {debugInfo.processedContracts}</div>
-                    <div>Skipped Contracts: {debugInfo.totalContracts - debugInfo.processedContracts}</div>
-                    
-                    {debugInfo.unmatchedLocations.length > 0 && (
-                      <div className="mt-2">
-                        <div className="text-red-300 font-medium">Unmatched Locations:</div>
-                        <div className="max-h-20 overflow-y-auto">
-                          {debugInfo.unmatchedLocations.map((location, index) => (
-                            <div key={index} className="text-red-200">• {location}</div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {debugInfo.matchedContracts.length > 0 && (
-                      <div className="mt-2">
-                        <div className="text-green-300 font-medium">Matched Contracts:</div>
-                        <div className="max-h-20 overflow-y-auto">
-                          {debugInfo.matchedContracts.map((contract, index) => (
-                            <div key={index} className="text-green-200">• {contract}</div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
 
       {/* Optimized TSP Route Display - Bottom */}

@@ -12,7 +12,6 @@ const RemoteSession = () => {
   const [conn, setConn] = useState(null);
   const [connected, setConnected] = useState(false);
   const [records, setRecords] = useState([]);
-  const [debugImages, setDebugImages] = useState({});
   const peerRef = useRef(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -78,7 +77,6 @@ const RemoteSession = () => {
     connection.on('data', (data) => {
       if (data.type === 'records') {
         setRecords(data.records);
-        setDebugImages(data.debugImages || {});
       }
       if (data.type === 'error') {
         setErrorMessage(data.message);
@@ -179,7 +177,6 @@ const RemoteSession = () => {
       </div>
       <RecordsTable 
         records={records} 
-        debugImages={debugImages} 
         onUpdate={handleUpdateRecords}
       />
     </div>

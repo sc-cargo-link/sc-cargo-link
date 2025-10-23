@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -21,12 +20,6 @@ interface RecordsTableProps {
       }>;
     }>;
   }>;
-  debugImages: {
-    [key: string]: {
-      reward: string;
-      objective: string;
-    };
-  };
   onUpdate: (records: RecordsTableProps['records']) => void;
 }
 
@@ -185,7 +178,7 @@ const EditDialog: React.FC<EditDialogProps> = ({ record, onSave, onClose }) => {
   );
 };
 
-const RecordsTable: React.FC<RecordsTableProps> = ({ records, debugImages, onUpdate }) => {
+const RecordsTable: React.FC<RecordsTableProps> = ({ records, onUpdate }) => {
   const [editingRecord, setEditingRecord] = useState<RecordsTableProps['records'][0] | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -260,35 +253,21 @@ const RecordsTable: React.FC<RecordsTableProps> = ({ records, debugImages, onUpd
                 .map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="text-green-400 font-semibold">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span>{item.reward}</span>
-                        </TooltipTrigger>
-                        <TooltipContent side="top">
-                          <img src={debugImages[item.id]?.reward} alt="Reward Debug" className="max-w-xs max-h-40" />
-                        </TooltipContent>
-                      </Tooltip>
+                      {item.reward}
                     </TableCell>
                     <TableCell className="text-gray-300">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="whitespace-pre-line block">
-                            {item.objective.map((obj, idx) => (
-                              <div>
-                                  <span className="text-emerald-400">{obj.item}</span>:
-                                  {(obj as any).deliveries.map((del: any, dIdx: number) => (
-                                    <div key={dIdx} className="ml-4">
-                                      - [<span className="text-red-300">{del.quantity}</span>] <span className="text-green-300">{obj.location}</span> ⇒ <span className="text-green-300">{del.location}</span> 
-                                    </div>
-                                  ))}
+                      <span className="whitespace-pre-line block">
+                        {item.objective.map((obj, idx) => (
+                          <div key={idx}>
+                              <span className="text-emerald-400">{obj.item}</span>:
+                              {(obj as any).deliveries.map((del: any, dIdx: number) => (
+                                <div key={dIdx} className="ml-4">
+                                  - [<span className="text-red-300">{del.quantity}</span>] <span className="text-green-300">{obj.location}</span> ⇒ <span className="text-green-300">{del.location}</span> 
                                 </div>
-                            ))}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="top">
-                          <img src={debugImages[item.id]?.objective} alt="Objective Debug" className="max-w-xs max-h-40" />
-                        </TooltipContent>
-                      </Tooltip>
+                              ))}
+                            </div>
+                        ))}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-2">

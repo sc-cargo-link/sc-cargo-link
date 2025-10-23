@@ -47,11 +47,8 @@ interface CapturePeerHandlerProps {
   zonesRef: React.RefObject<any>;
   sessionId: string;
   setExtractedData: React.Dispatch<any>;
-  setDebugImages: React.Dispatch<any>;
   setErrorMessage: React.Dispatch<any>;
-  isDebugEnabled: boolean;
   extractedDataRef: React.RefObject<any>;
-  debugImagesRef: React.RefObject<any>;
   connRef: React.MutableRefObject<any>;
   peerRef: React.MutableRefObject<any>;
 }
@@ -62,11 +59,8 @@ const CapturePeerHandler = forwardRef<CapturePeerHandlerRef, CapturePeerHandlerP
   zonesRef,
   sessionId,
   setExtractedData,
-  setDebugImages,
   setErrorMessage,
-  isDebugEnabled,
   extractedDataRef,
-  debugImagesRef,
   connRef,
   peerRef
 }, ref) => {
@@ -181,18 +175,6 @@ const CapturePeerHandler = forwardRef<CapturePeerHandlerRef, CapturePeerHandlerP
         scheduler.addJob('recognize', contractNameCanvas.toDataURL(), 'eng')
       ]);
       const id = nanoid(5);
-      if (isDebugEnabled) {
-        setDebugImages(prev => {
-          return {
-            ...prev,
-            [id]: {
-              reward: rewardCanvas.toDataURL(),
-              objective: objectiveCanvas.toDataURL(),
-              contractName: contractNameCanvas.toDataURL()
-            }
-          };
-        });
-      }
       if (rewardText.data.text.trim() === '') {
         if (connRef.current) {
           connRef.current.send({ type: 'error', message: 'No text found in the reward zone' });
@@ -253,8 +235,7 @@ const CapturePeerHandler = forwardRef<CapturePeerHandlerRef, CapturePeerHandlerP
     interval = setInterval(() => {
       conn.send({
         type: 'records',
-        records: extractedDataRef.current,
-        debugImages: debugImagesRef.current
+        records: extractedDataRef.current
       });
     }, 300);
     conn.on('close', () => {
