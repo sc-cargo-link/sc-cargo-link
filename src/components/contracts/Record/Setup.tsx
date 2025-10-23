@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from '@/components/ui/button';
 import { Camera, Square, ArrowDown, ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -59,48 +58,49 @@ const Setup: React.FC<SetupProps> = ({
   };
 
   return (
-    <Collapsible
-      open={isSetupOpen}
-      onOpenChange={setIsSetupOpen}
-      className="holographic-panel rounded-lg p-6 border border-neon-blue/20 space-y-4"
-    >
+    <div className="holographic-panel rounded-lg p-6 border border-neon-blue/20 space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold text-neon-blue">Setup</h2>
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="sm">
-            {isSetupOpen ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
-          </Button>
-        </CollapsibleTrigger>
+        <Button variant="ghost" size="sm" onClick={() => setIsSetupOpen(!isSetupOpen)}>
+          {isSetupOpen ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+        </Button>
       </div>
-      <CollapsibleContent className="space-y-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between w-full mb-2">
-            <div className="flex space-x-2">
-              <Button 
-                onClick={startCapture} 
-                disabled={captureActive}
-                className="bg-neon-blue text-space-dark hover:bg-neon-blue/90"
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                Start Capture
-              </Button>
-              <Button 
-                onClick={stopCapture} 
-                disabled={!captureActive}
-                variant="outline"
-                className="border-neon-blue/50 text-neon-blue hover:bg-neon-blue/10"
-              >
-                Stop Capture
-              </Button>
-            </div>
-            <div className="flex-1 flex justify-end">
-              <SessionInfo sessionId={sessionId} />
-            </div>
-          </div>
-          <VideoZoneSelector captureActive={captureActive} onZonesChange={setZones} videoRef={videoRef} />
+      
+      {/* Controls always visible */}
+      <div className="flex items-center justify-between w-full">
+        <div className="flex space-x-2">
+          <Button 
+            onClick={startCapture} 
+            disabled={captureActive}
+            className="bg-neon-blue text-space-dark hover:bg-neon-blue/90"
+          >
+            <Camera className="h-4 w-4 mr-2" />
+            Start Capture
+          </Button>
+          <Button 
+            onClick={stopCapture} 
+            disabled={!captureActive}
+            variant="outline"
+            className="border-neon-blue/50 text-neon-blue hover:bg-neon-blue/10"
+          >
+            Stop Capture
+          </Button>
         </div>
-      </CollapsibleContent>
-    </Collapsible>
+        <div className="flex-1 flex justify-end">
+          <SessionInfo sessionId={sessionId} />
+        </div>
+      </div>
+
+      {/* Video preview - always in DOM but hidden with max-height for smooth collapse */}
+      <div 
+        className={cn(
+          "transition-all duration-300 overflow-hidden",
+          isSetupOpen ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"
+        )}
+      >
+        <VideoZoneSelector captureActive={captureActive} onZonesChange={setZones} videoRef={videoRef} />
+      </div>
+    </div>
   );
 };
 
