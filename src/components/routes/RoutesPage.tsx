@@ -411,7 +411,7 @@ const RoutesPage = () => {
         if (orbitRadius > 0 && orbitRadius < Math.max(canvasSize.width, canvasSize.height)) {
           ctx.beginPath();
           ctx.arc(centerX, centerY, orbitRadius, 0, 2 * Math.PI);
-          ctx.strokeStyle = 'rgba(59, 130, 246, 0.3)';
+          ctx.strokeStyle = '#3b82f64d';
           ctx.lineWidth = 1;
           ctx.setLineDash([8, 8]);
           ctx.stroke();
@@ -462,8 +462,8 @@ const RoutesPage = () => {
         const radius = POINT_RADIUS + 2;
         ctx.beginPath();
         ctx.arc(px, py, radius, 0, 2 * Math.PI);
-        ctx.fillStyle = '#6b7280';
-        ctx.shadowColor = '#6b7280';
+        ctx.fillStyle = '#a8a19e';
+        ctx.shadowColor = '#a8a19e';
         ctx.shadowBlur = 15;
         ctx.fill();
         ctx.shadowBlur = 0;
@@ -478,8 +478,8 @@ const RoutesPage = () => {
       if (px >= 0 && px <= canvasSize.width && py >= 0 && py <= canvasSize.height) {
         ctx.beginPath();
         ctx.arc(px, py, POINT_RADIUS, 0, 2 * Math.PI);
-        ctx.fillStyle = '#6b7280';
-        ctx.shadowColor = '#6b7280';
+        ctx.fillStyle = '#a8a19e';
+        ctx.shadowColor = '#a8a19e';
         ctx.shadowBlur = 8;
         ctx.fill();
         ctx.shadowBlur = 0;
@@ -494,8 +494,8 @@ const RoutesPage = () => {
       if (px >= 0 && px <= canvasSize.width && py >= 0 && py <= canvasSize.height) {
         ctx.beginPath();
         ctx.arc(px, py, POINT_RADIUS - 2, 0, 2 * Math.PI);
-        ctx.fillStyle = '#6b7280';
-        ctx.shadowColor = '#6b7280';
+        ctx.fillStyle = '#a8a19e';
+        ctx.shadowColor = '#a8a19e';
         ctx.shadowBlur = 6;
         ctx.fill();
         ctx.shadowBlur = 0;
@@ -510,8 +510,8 @@ const RoutesPage = () => {
       if (px >= 0 && px <= canvasSize.width && py >= 0 && py <= canvasSize.height) {
         ctx.beginPath();
         ctx.arc(px, py, POINT_RADIUS - 1, 0, 2 * Math.PI);
-        ctx.fillStyle = '#6b7280';
-        ctx.shadowColor = '#6b7280';
+        ctx.fillStyle = '#a8a19e';
+        ctx.shadowColor = '#a8a19e';
         ctx.shadowBlur = 6;
         ctx.fill();
         ctx.shadowBlur = 0;
@@ -587,8 +587,8 @@ const RoutesPage = () => {
       if (px >= 0 && px <= canvasSize.width && py >= 0 && py <= canvasSize.height) {
         ctx.beginPath();
         ctx.arc(px, py, POINT_RADIUS - 1, 0, 2 * Math.PI);
-        ctx.fillStyle = '#6b7280';
-        ctx.shadowColor = '#6b7280';
+        ctx.fillStyle = '#a8a19e';
+        ctx.shadowColor = '#a8a19e';
         ctx.shadowBlur = 6;
         ctx.fill();
         ctx.shadowBlur = 0;
@@ -604,8 +604,8 @@ const RoutesPage = () => {
         if (px >= 0 && px <= canvasSize.width && py >= 0 && py <= canvasSize.height) {
           ctx.beginPath();
           ctx.arc(px, py, POINT_RADIUS - 1, 0, 2 * Math.PI);
-          ctx.fillStyle = '#6b7280';
-          ctx.shadowColor = '#6b7280';
+          ctx.fillStyle = '#a8a19e';
+          ctx.shadowColor = '#a8a19e';
           ctx.shadowBlur = 6;
           ctx.fill();
           ctx.shadowBlur = 0;
@@ -638,7 +638,7 @@ const RoutesPage = () => {
       
       // Draw lines between all points
       if (routePoints.length > 1) {
-        ctx.strokeStyle = 'rgba(59, 130, 246, 0.5)'; // Dimmed blue
+        ctx.strokeStyle = '#3b82f680'; // Dimmed blue
         ctx.lineWidth = 3;
         ctx.setLineDash([10, 5]);
         
@@ -675,11 +675,11 @@ const RoutesPage = () => {
           const bgWidth = textMetrics.width + padding * 2;
           const bgHeight = 16;
           
-          ctx.fillStyle = 'rgba(31, 41, 55, 0.9)'; // Dark background
+          ctx.fillStyle = '#1f2937e6'; // Dark background
           ctx.fillRect(midX - bgWidth / 2, midY - bgHeight / 2, bgWidth, bgHeight);
           
           // Draw label border
-          ctx.strokeStyle = 'rgba(59, 130, 246, 0.8)';
+          ctx.strokeStyle = '#3b82f6cc';
           ctx.lineWidth = 1;
           ctx.setLineDash([]);
           ctx.strokeRect(midX - bgWidth / 2, midY - bgHeight / 2, bgWidth, bgHeight);
@@ -718,13 +718,13 @@ const RoutesPage = () => {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       
-      ctx.fillStyle = '#6b7280';
+      ctx.fillStyle = '#a8a19e';
       ctx.font = fontSize + ' Arial';
       ctx.fillText(cleanLocationName(entity.name), screenX, screenY + radius + 12);
       
       if (contractLocations.length > 0) {
         ctx.font = contractFontSize + ' Arial';
-        ctx.fillStyle = '#9ca3af';
+        ctx.fillStyle = '#a8a19e';
         
         contractLocations.forEach((contractLocation, index) => {
           const yOffset = screenY + radius + 12 + (parseInt(fontSize) + 6) + (index * lineHeight);
@@ -799,24 +799,24 @@ const RoutesPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+    <div className="min-h-screen bg-background">
       <Navbar />
       <div className="flex w-full h-[calc(100vh-5rem)] overflow-hidden">
         {/* Contracts Sidebar */}
-        <div className={`bg-gray-800/50 backdrop-blur-sm border-r border-gray-700 flex flex-col flex-shrink-0 transition-all duration-300 ${isContractsSidebarCollapsed ? 'w-12' : 'w-96'}`}>
+        <div className={`bg-card/50 backdrop-blur-sm border-r border-border flex flex-col flex-shrink-0 transition-all duration-300 ${isContractsSidebarCollapsed ? 'w-12' : 'w-96'}`}>
           {isContractsSidebarCollapsed ? (
             <div className="flex flex-col items-center py-4">
               <Button
                 onClick={() => setIsContractsSidebarCollapsed(false)}
                 variant="ghost"
                 size="sm"
-                className="text-gray-400 hover:text-white hover:bg-gray-700"
+                className="text-muted-foreground hover:text-foreground hover:bg-muted"
                 title="Expand Contracts"
               >
                 <ChevronRight className="h-5 w-5" />
               </Button>
               <div 
-                className="text-xs text-gray-400 mt-4"
+                className="text-muted-foreground mt-4"
                 style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
               >
                 Contracts ({contracts.length})
@@ -824,15 +824,15 @@ const RoutesPage = () => {
             </div>
           ) : (
             <>
-              <div className="p-4 border-b border-gray-700">
+              <div className="p-4 border-b border-border">
                 <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-lg font-bold text-white">Contracts</h2>
+                  <h2 className="text-lg font-bold text-foreground">Contracts</h2>
                   <div className="flex items-center gap-2">
                     <Button 
                       onClick={() => setIsManageDialogOpen(true)}
                       variant="outline" 
                       size="sm"
-                      className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10"
+                      className="border-primary/50 text-primary hover:bg-primary/10"
                     >
                       <Settings className="mr-2 h-3 w-3" />
                       Manage
@@ -841,7 +841,7 @@ const RoutesPage = () => {
                       onClick={() => setIsContractsSidebarCollapsed(true)}
                       variant="ghost"
                       size="sm"
-                      className="text-gray-400 hover:text-white"
+                      className="text-muted-foreground hover:text-foreground"
                       title="Collapse Contracts"
                     >
                       <ChevronLeft className="h-4 w-4" />
@@ -849,24 +849,24 @@ const RoutesPage = () => {
                   </div>
                 </div>
             <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder="Search locations or items..."
                 value={contractSearchQuery}
                 onChange={(e) => setContractSearchQuery(e.target.value)}
-                className="pl-9 pr-9 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
+                className="pl-9 pr-9 bg-card border-border text-foreground placeholder:text-muted-foreground"
               />
               {contractSearchQuery && (
                 <button
                   onClick={() => setContractSearchQuery('')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <X className="h-4 w-4" />
                 </button>
               )}
             </div>
-            <div className="text-sm text-gray-300">
+            <div className="text-sm text-muted-foreground">
               {(() => {
                 if (!contractSearchQuery.trim()) return contracts.length;
                 const query = contractSearchQuery.toLowerCase();
@@ -920,24 +920,16 @@ const RoutesPage = () => {
                 }, 0);
 
                 return (
-                  <div key={recordId} className="bg-gray-700/50 rounded-lg p-3 border border-gray-600">
+                  <div key={recordId} className="bg-card/50 rounded-lg p-3 border border-border">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         {firstContract.contractName && (
-                          <span className="text-white font-medium text-xs">{firstContract.contractName}</span>
+                          <span className="text-foreground font-medium text-xs">{firstContract.contractName}</span>
                         )}
                         <span className="text-green-400 font-semibold text-xs">
                           {totalReward >= 1000 ? `${Math.round(totalReward / 1000)}k` : totalReward} aUEC
                         </span>
                         <span className="text-blue-400 font-semibold text-xs">{totalSCU} SCU</span>
-                        <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                          firstContract.status === 'pending' ? 'bg-yellow-600 text-yellow-100' :
-                          firstContract.status === 'in-progress' ? 'bg-blue-600 text-blue-100' :
-                          firstContract.status === 'completed' ? 'bg-green-600 text-green-100' :
-                          'bg-red-600 text-red-100'
-                        }`}>
-                          {firstContract.status}
-                        </span>
                       </div>
                     </div>
                     
@@ -955,7 +947,7 @@ const RoutesPage = () => {
                           );
                         
                         return (
-                          <div key={contract.id} className="text-xs text-gray-300">
+                          <div key={contract.id} className="text-xs text-muted-foreground">
                             {showPickup && (
                               <>
                                 <div className="flex items-center gap-2 mb-1">
@@ -997,7 +989,7 @@ const RoutesPage = () => {
               });
             })()}
             {contracts.length === 0 && (
-              <div className="text-center text-gray-400 py-8">
+              <div className="text-center text-muted-foreground py-8">
                 No contracts available
               </div>
             )}
@@ -1033,7 +1025,7 @@ const RoutesPage = () => {
               
               return filteredGroups;
             })()).length === 0 && (
-              <div className="text-center text-gray-400 py-8">
+              <div className="text-center text-muted-foreground py-8">
                 No contracts match your search
               </div>
             )}
@@ -1046,9 +1038,9 @@ const RoutesPage = () => {
         <div className="flex-1 flex flex-col">
           {/* Error Message */}
           {locationError && (
-            <div className="flex-shrink-0 p-3 bg-red-600/90 backdrop-blur-sm border-b border-red-500">
+            <div className="flex-shrink-0 p-3 bg-destructive/90 backdrop-blur-sm border-b border-destructive">
               <div className="flex items-center justify-center">
-                <div className="flex items-center gap-2 text-white">
+                <div className="flex items-center gap-2 text-foreground">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
@@ -1056,7 +1048,7 @@ const RoutesPage = () => {
                 </div>
                 <button
                   onClick={() => setLocationError(null)}
-                  className="ml-4 text-red-200 hover:text-white transition-colors"
+                  className="ml-4 text-destructive-foreground/80 hover:text-destructive-foreground transition-colors"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -1066,29 +1058,29 @@ const RoutesPage = () => {
             </div>
           )}
           
-          <div className="flex-shrink-0 p-4 text-center bg-gray-900/50 backdrop-blur-sm">
-            <h1 className="text-2xl font-bold text-white mb-2">Stanton System Map</h1>
+          <div className="flex-shrink-0 p-4 text-center bg-card/50 backdrop-blur-sm">
+            <h1 className="text-2xl font-bold text-foreground mb-2">Stanton System Map</h1>
             <div className="flex items-center justify-center gap-4 mb-2">
               <button
                 onClick={() => {
                   setZoom(1);
                   setPan({ x: 0, y: 0 });
                 }}
-                className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition-colors duration-200"
+                className="px-3 py-1 rounded-lg bg-background border border-primary text-primary font-semibold text-xs transition-colors duration-200 hover:bg-primary hover:text-primary-foreground"
               >
                 Reset View
               </button>
-              <div className="text-xs text-gray-300">
+              <div className="text-xs text-muted-foreground">
                 Zoom: {(zoom * 100).toFixed(0)}% | Pan: ({pan.x.toFixed(0)}, {pan.y.toFixed(0)})
               </div>
             </div>
-            <div className="flex flex-wrap gap-4 justify-center text-xs text-gray-300">
+            <div className="flex flex-wrap gap-4 justify-center text-xs text-muted-foreground">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={locationTypeToggles[0]}
                   onChange={() => setLocationTypeToggles(prev => ({ ...prev, 0: !prev[0] }))}
-                  className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+                  className="w-4 h-4 text-primary bg-card border-border rounded focus:ring-primary focus:ring-2"
                 />
                 <span>Star</span>
               </label>
@@ -1097,7 +1089,7 @@ const RoutesPage = () => {
                   type="checkbox"
                   checked={locationTypeToggles[1]}
                   onChange={() => setLocationTypeToggles(prev => ({ ...prev, 1: !prev[1] }))}
-                  className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+                  className="w-4 h-4 text-primary bg-card border-border rounded focus:ring-primary focus:ring-2"
                 />
                 <span>Planets</span>
               </label>
@@ -1106,7 +1098,7 @@ const RoutesPage = () => {
                   type="checkbox"
                   checked={locationTypeToggles[2]}
                   onChange={() => setLocationTypeToggles(prev => ({ ...prev, 2: !prev[2] }))}
-                  className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+                  className="w-4 h-4 text-primary bg-card border-border rounded focus:ring-primary focus:ring-2"
                 />
                 <span>Moons</span>
               </label>
@@ -1115,7 +1107,7 @@ const RoutesPage = () => {
                   type="checkbox"
                   checked={locationTypeToggles[4]}
                   onChange={() => setLocationTypeToggles(prev => ({ ...prev, 4: !prev[4] }))}
-                  className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+                  className="w-4 h-4 text-primary bg-card border-border rounded focus:ring-primary focus:ring-2"
                 />
                 <span>Lagrangian</span>
               </label>
@@ -1124,7 +1116,7 @@ const RoutesPage = () => {
                   type="checkbox"
                   checked={locationTypeToggles[8]}
                   onChange={() => setLocationTypeToggles(prev => ({ ...prev, 8: !prev[8] }))}
-                  className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+                  className="w-4 h-4 text-primary bg-card border-border rounded focus:ring-primary focus:ring-2"
                 />
                 <span>Stations</span>
               </label>
@@ -1133,13 +1125,13 @@ const RoutesPage = () => {
           
           <div 
             ref={containerRef}
-            className="flex-1 relative w-full h-full overflow-hidden bg-gray-900"
+            className="flex-1 relative w-full h-full overflow-hidden bg-background"
           >
             <canvas
               ref={canvasRef}
               width={canvasSize.width}
               height={canvasSize.height}
-              className="block w-full h-full bg-gray-800 cursor-grab active:cursor-grabbing"
+              className="block w-full h-full bg-card cursor-grab active:cursor-grabbing"
               onMouseMove={handleMouseMove}
               onMouseDown={handleMouseDown}
               onMouseUp={handleMouseUp}
@@ -1159,9 +1151,9 @@ const RoutesPage = () => {
       </div>
       
       <Dialog open={isManageDialogOpen} onOpenChange={setIsManageDialogOpen}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto bg-gray-900 border-blue-500/30">
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto bg-card border-primary/30">
           <DialogHeader>
-            <DialogTitle className="text-2xl text-blue-400">Manage Contracts</DialogTitle>
+            <DialogTitle className="text-2xl text-primary">Manage Contracts</DialogTitle>
           </DialogHeader>
           <Record />
         </DialogContent>

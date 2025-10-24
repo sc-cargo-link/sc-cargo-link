@@ -5,44 +5,44 @@
 
 @layer base {
   :root {
-    --background: 217 71% 12%;
-    --foreground: 210 40% 98%;
+    --background: #000000;
+    --foreground: #f8fafc;
 
-    --card: 217 71% 15%;
-    --card-foreground: 210 40% 98%;
+    --card: #1a1a1a;
+    --card-foreground: #f8fafc;
 
-    --popover: 217 71% 15%;
-    --popover-foreground: 210 40% 98%;
+    --popover: #1a1a1a;
+    --popover-foreground: #f8fafc;
 
-    --primary: 174 100% 69%;
-    --primary-foreground: 217 71% 12%;
+    --primary: #c7714c;
+    --primary-foreground: #948e8c;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: #2a2a2a;
+    --secondary-foreground: #f8fafc;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: #2a2a2a;
+    --muted-foreground: #a8a19e;
 
-    --accent: 196 100% 50%;
-    --accent-foreground: 210 40% 98%;
+    --accent: #b85a3a;
+    --accent-foreground: #f8fafc;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: #7f1d1d;
+    --destructive-foreground: #f8fafc;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 174 100% 69%;
+    --border: #2a2a2a;
+    --input: #2a2a2a;
+    --ring: #c7714c;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 217 71% 10%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 174 100% 69%;
-    --sidebar-primary-foreground: 217 71% 12%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 174 100% 69%;
+    --sidebar-background: #1a1a1a;
+    --sidebar-foreground: #f8fafc;
+    --sidebar-primary: #c7714c;
+    --sidebar-primary-foreground: #948e8c;
+    --sidebar-accent: #2a2a2a;
+    --sidebar-accent-foreground: #f8fafc;
+    --sidebar-border: #2a2a2a;
+    --sidebar-ring: #c7714c;
   }
 }
 
@@ -59,15 +59,46 @@
   /* Holographic panel effect */
   .holographic-panel {
     @apply bg-holographic border border-neon-blue/20 backdrop-blur-sm;
-    box-shadow: 0 0 15px rgba(100, 255, 218, 0.1);
+    box-shadow: 0 0 15px #c7714c1a;
   }
 
   .neon-border {
-    @apply border border-neon-blue/30 shadow-[0_0_10px_rgba(100,255,218,0.2)];
+    @apply border border-neon-blue/30 shadow-[0_0_10px_#c7714c33];
   }
 
   .neon-text {
     @apply text-neon-blue;
-    text-shadow: 0 0 5px rgba(100, 255, 218, 0.5);
+    text-shadow: 0 0 5px #c7714c80;
+  }
+
+  /* Custom scrollbar styles */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--background);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--muted);
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: var(--background);
+  }
+
+  /* Firefox scrollbar styles */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--muted) var(--background);
   }
 }

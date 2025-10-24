@@ -66,13 +66,13 @@ const VideoZoneSelector: React.FC<VideoZoneSelectorProps> = ({ captureActive, on
       let strokeColor, fillColor;
       if (type === 'reward') {
         strokeColor = '#22c55e';
-        fillColor = 'rgba(34, 197, 94, 0.2)';
+        fillColor = '#22c55e33';
       } else if (type === 'objective') {
         strokeColor = '#3b82f6';
-        fillColor = 'rgba(59, 130, 246, 0.2)';
+        fillColor = '#3b82f633';
       } else if (type === 'contractName') {
         strokeColor = '#a855f7';
-        fillColor = 'rgba(168, 85, 247, 0.2)';
+        fillColor = '#a855f733';
       }
       context.strokeStyle = strokeColor;
       context.fillStyle = fillColor;
@@ -176,13 +176,13 @@ const VideoZoneSelector: React.FC<VideoZoneSelectorProps> = ({ captureActive, on
         let strokeColor, fillColor;
         if (type === 'reward') {
           strokeColor = '#22c55e';
-          fillColor = 'rgba(34, 197, 94, 0.2)';
+          fillColor = '#22c55e33';
         } else if (type === 'objective') {
           strokeColor = '#3b82f6';
-          fillColor = 'rgba(59, 130, 246, 0.2)';
+          fillColor = '#3b82f633';
         } else if (type === 'contractName') {
           strokeColor = '#a855f7';
-          fillColor = 'rgba(168, 85, 247, 0.2)';
+          fillColor = '#a855f733';
         }
         context.strokeStyle = strokeColor;
         context.fillStyle = fillColor;
@@ -203,13 +203,13 @@ const VideoZoneSelector: React.FC<VideoZoneSelectorProps> = ({ captureActive, on
           let strokeColor, fillColor;
           if (type === 'reward') {
             strokeColor = '#22c55e';
-            fillColor = 'rgba(34, 197, 94, 0.2)';
+            fillColor = '#22c55e33';
           } else if (type === 'objective') {
             strokeColor = '#3b82f6';
-            fillColor = 'rgba(59, 130, 246, 0.2)';
+            fillColor = '#3b82f633';
           } else if (type === 'contractName') {
             strokeColor = '#a855f7';
-            fillColor = 'rgba(168, 85, 247, 0.2)';
+            fillColor = '#a855f733';
           }
           context.strokeStyle = strokeColor;
           context.fillStyle = fillColor;
@@ -225,13 +225,13 @@ const VideoZoneSelector: React.FC<VideoZoneSelectorProps> = ({ captureActive, on
       let strokeColor, fillColor;
       if (currentZoneType === 'reward') {
         strokeColor = '#22c55e';
-        fillColor = 'rgba(34, 197, 94, 0.2)';
+        fillColor = '#22c55e33';
       } else if (currentZoneType === 'objective') {
         strokeColor = '#3b82f6';
-        fillColor = 'rgba(59, 130, 246, 0.2)';
+        fillColor = '#3b82f633';
       } else if (currentZoneType === 'contractName') {
         strokeColor = '#a855f7';
-        fillColor = 'rgba(168, 85, 247, 0.2)';
+        fillColor = '#a855f733';
       }
       context.strokeStyle = strokeColor;
       context.fillStyle = fillColor;
@@ -250,13 +250,13 @@ const VideoZoneSelector: React.FC<VideoZoneSelectorProps> = ({ captureActive, on
         let strokeColor, fillColor;
         if (type === 'reward') {
           strokeColor = '#22c55e';
-          fillColor = 'rgba(34, 197, 94, 0.2)';
+          fillColor = '#22c55e33';
         } else if (type === 'objective') {
           strokeColor = '#3b82f6';
-          fillColor = 'rgba(59, 130, 246, 0.2)';
+          fillColor = '#3b82f633';
         } else if (type === 'contractName') {
           strokeColor = '#a855f7';
-          fillColor = 'rgba(168, 85, 247, 0.2)';
+          fillColor = '#a855f733';
         }
         context.strokeStyle = strokeColor;
         context.fillStyle = fillColor;

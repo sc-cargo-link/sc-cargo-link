@@ -20,59 +20,59 @@ export default {
 		},
 		extend: {
 			colors: {
-				border: 'hsl(var(--border))',
-				input: 'hsl(var(--input))',
-				ring: 'hsl(var(--ring))',
-				background: 'hsl(var(--background))',
-				foreground: 'hsl(var(--foreground))',
+				border: 'var(--border)',
+				input: 'var(--input)',
+				ring: 'var(--ring)',
+				background: 'var(--background)',
+				foreground: 'var(--foreground)',
 				primary: {
-					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					DEFAULT: 'var(--primary)',
+					foreground: 'var(--primary-foreground)'
 				},
 				secondary: {
-					DEFAULT: 'hsl(var(--secondary))',
-					foreground: 'hsl(var(--secondary-foreground))'
+					DEFAULT: 'var(--secondary)',
+					foreground: 'var(--secondary-foreground)'
 				},
 				destructive: {
-					DEFAULT: 'hsl(var(--destructive))',
-					foreground: 'hsl(var(--destructive-foreground))'
+					DEFAULT: 'var(--destructive)',
+					foreground: 'var(--destructive-foreground)'
 				},
 				muted: {
-					DEFAULT: 'hsl(var(--muted))',
-					foreground: 'hsl(var(--muted-foreground))'
+					DEFAULT: 'var(--muted)',
+					foreground: 'var(--muted-foreground)'
 				},
 				accent: {
-					DEFAULT: 'hsl(var(--accent))',
-					foreground: 'hsl(var(--accent-foreground))'
+					DEFAULT: 'var(--accent)',
+					foreground: 'var(--accent-foreground)'
 				},
 				popover: {
-					DEFAULT: 'hsl(var(--popover))',
-					foreground: 'hsl(var(--popover-foreground))'
+					DEFAULT: 'var(--popover)',
+					foreground: 'var(--popover-foreground)'
 				},
 				card: {
-					DEFAULT: 'hsl(var(--card))',
-					foreground: 'hsl(var(--card-foreground))'
+					DEFAULT: 'var(--card)',
+					foreground: 'var(--card-foreground)'
 				},
 				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background))',
-					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
+					DEFAULT: 'var(--sidebar-background)',
+					foreground: 'var(--sidebar-foreground)',
+					primary: 'var(--sidebar-primary)',
+					'primary-foreground': 'var(--sidebar-primary-foreground)',
+					accent: 'var(--sidebar-accent)',
+					'accent-foreground': 'var(--sidebar-accent-foreground)',
+					border: 'var(--sidebar-border)',
+					ring: 'var(--sidebar-ring)'
 				},
 				// Star Citizen theme colors
 				space: {
-					dark: '#0a192f',
-					medium: '#172a45',
-					light: '#303c55',
+					dark: '#000000',
+					medium: '#1a1a1a',
+					light: '#2a2a2a',
 				},
 				neon: {
-					blue: '#64ffda',
-					purple: '#8892b0',
-					cyan: '#00b7ff',
+					blue: '#c7714c',
+					purple: '#b85a3a',
+					cyan: '#d4825c',
 				},
 			},
 			borderRadius: {
@@ -100,11 +100,11 @@ export default {
 				'pulse-glow': {
 					'0%, 100%': { 
 						opacity: '0.6',
-						boxShadow: '0 0 5px rgba(100, 255, 218, 0.4)'
+						boxShadow: '0 0 5px #c7714c66'
 					},
 					'50%': {
 						opacity: '1',
-						boxShadow: '0 0 15px rgba(100, 255, 218, 0.7)' 
+						boxShadow: '0 0 15px #c7714cb3' 
 					}
 				},
 				'float': {
@@ -123,8 +123,8 @@ export default {
 				'float': 'float 5s infinite ease-in-out'
 			},
 			backgroundImage: {
-				'space-gradient': 'linear-gradient(180deg, #0a192f 0%, #172a45 100%)',
-				'holographic': 'linear-gradient(135deg, rgba(100,255,218,0.05) 0%, rgba(0,183,255,0.05) 100%)',
+				'space-gradient': 'linear-gradient(180deg, #000000 0%, #1a1a1a 100%)',
+				'holographic': 'linear-gradient(135deg, #c7714c0d 0%, #d4825c0d 100%)',
 			}
 		}
 	},
