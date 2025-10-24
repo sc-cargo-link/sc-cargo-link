@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { X, Edit, Plus, Trash, Search } from 'lucide-react';
+import { data as allEntities } from '@/data/AllEntities';
+import { cn } from '@/lib/utils';
+import { cleanStationNameForMatching } from '@/lib/locationUtils';
 
 interface RecordsTableProps {
   records: Array<{
@@ -182,6 +185,23 @@ const RecordsTable: React.FC<RecordsTableProps> = ({ records, onUpdate }) => {
   const [editingRecord, setEditingRecord] = useState<RecordsTableProps['records'][0] | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Function to check if a location exists in AllEntities
+  // Uses the same matching logic as RoutesPage.tsx
+  const isValidLocation = (locationName: string): boolean => {
+    if (!locationName) return false;
+    
+    const cleanedLocation = cleanStationNameForMatching(locationName);
+    
+    // Try to find matching entity using the same logic as RoutesPage
+    const entity = allEntities.find(entity => 
+      entity.name.toLowerCase().includes(cleanedLocation.toLowerCase()) ||
+      entity.key.toLowerCase().includes(cleanedLocation.toLowerCase()) ||
+      cleanedLocation.toLowerCase().includes(entity.name.toLowerCase())
+    );
+    
+    return entity !== undefined;
+  };
+
   const handleRemoveRecord = (recordId: string) => {
     const updatedRecords = records.filter(record => record.id !== recordId);
     onUpdate(updatedRecords);
@@ -195,22 +215,47 @@ const RecordsTable: React.FC<RecordsTableProps> = ({ records, onUpdate }) => {
     setEditingRecord(null);
   };
 
-  const filteredRecords = records.filter(record => {
-    if (!searchQuery.trim()) return true;
-    
-    const query = searchQuery.toLowerCase();
-    const rewardMatch = record.reward.toString().includes(query);
-    const objectiveMatch = record.objective.some(obj => {
-      const itemMatch = obj.item.toLowerCase().includes(query);
-      const locationMatch = obj.location.toLowerCase().includes(query);
-      const deliveryMatch = obj.deliveries?.some(del => 
-        del.location.toLowerCase().includes(query)
-      );
-      return itemMatch || locationMatch || deliveryMatch;
-    });
-    
-    return rewardMatch || objectiveMatch;
-  });
+  const filteredRecords = records
+    .map(record => {
+      if (!searchQuery.trim()) return record;
+      
+      const query = searchQuery.toLowerCase();
+      const rewardMatch = record.reward.toString().includes(query);
+      
+      // Filter objectives and their deliveries based on search
+      const filteredObjectives = record.objective
+        .map(obj => {
+          const itemMatch = obj.item.toLowerCase().includes(query);
+          const sourceMatch = obj.location.toLowerCase().includes(query);
+          
+          // Filter deliveries that match the search
+          const filteredDeliveries = obj.deliveries?.filter(del => {
+            const destMatch = del.location.toLowerCase().includes(query);
+            // Show delivery if: reward matches, item matches, source matches, or destination matches
+            return rewardMatch || itemMatch || sourceMatch || destMatch;
+          }) || [];
+          
+          // Keep objective if it has matching deliveries or if the objective itself matches
+          if (filteredDeliveries.length > 0 || itemMatch || sourceMatch || rewardMatch) {
+            return {
+              ...obj,
+              deliveries: filteredDeliveries
+            };
+          }
+          return null;
+        })
+        .filter(obj => obj !== null);
+      
+      // Only include record if it has matching objectives
+      if (filteredObjectives.length > 0) {
+        return {
+          ...record,
+          objective: filteredObjectives
+        };
+      }
+      return null;
+    })
+    .filter(record => record !== null);
 
   return (
     <div className="bg-black/30 rounded-lg p-4 border border-neon-blue/30">
@@ -220,7 +265,7 @@ const RecordsTable: React.FC<RecordsTableProps> = ({ records, onUpdate }) => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             type="text"
-            placeholder="Search by item, location, or reward..."
+            placeholder="Search by item, location, or reward (filters contract legs)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 pr-10 bg-white/10 border border-white/20 focus:bg-white/20 focus:border-neon-blue/50 transition-colors text-white placeholder:text-gray-400"
@@ -262,7 +307,18 @@ const RecordsTable: React.FC<RecordsTableProps> = ({ records, onUpdate }) => {
                               <span className="text-emerald-400">{obj.item}</span>:
                               {(obj as any).deliveries.map((del: any, dIdx: number) => (
                                 <div key={dIdx} className="ml-4">
-                                  - [<span className="text-red-300">{del.quantity}</span>] <span className="text-green-300">{obj.location}</span> ⇒ <span className="text-green-300">{del.location}</span> 
+                                  - [<span className="text-red-300">{del.quantity}</span>]{' '}
+                                  <span className={cn(
+                                    isValidLocation(obj.location) ? "text-green-300" : "text-red-500 font-semibold"
+                                  )}>
+                                    {obj.location}
+                                  </span>
+                                  {' '}⇒{' '}
+                                  <span className={cn(
+                                    isValidLocation(del.location) ? "text-green-300" : "text-red-500 font-semibold"
+                                  )}>
+                                    {del.location}
+                                  </span>
                                 </div>
                               ))}
                             </div>

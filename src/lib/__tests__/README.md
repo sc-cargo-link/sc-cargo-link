@@ -50,26 +50,6 @@ This test suite provides comprehensive coverage for the `RouteOptimizationServic
 
 ## Running Tests
 
-### Quick Test Run
-```bash
-npm run test src/lib/__tests__/routeOptimizationService.test.ts
-```
-
-### Test with Coverage
-```bash
-npm run test src/lib/__tests__/routeOptimizationService.test.ts --coverage
-```
-
-### Using Test Script
-```bash
-./test-route-optimizer.sh
-```
-
-### Interactive Test UI
-```bash
-npm run test:ui
-```
-
 ## Mock Data
 
 The tests use comprehensive mock data including:

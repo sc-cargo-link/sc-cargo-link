@@ -8,10 +8,8 @@ import Dashboard from "./components/dashboard/Dashboard";
 import ContractsPage from "./components/contracts/ContractsPage";
 import Record from "./components/contracts/Record";
 import RoutesPage from "./components/routes/RoutesPage";
-import RoutePlanningPage from "./components/routes/RoutePlanningPage";
 import NotFound from "./pages/NotFound";
 import RemoteSession from './components/contracts/RemoteSession';
-import LocationsMapPage from "./components/locations/LocationsMapPage";
 
 const queryClient = new QueryClient();
 
@@ -23,12 +21,10 @@ const App = () => (
       <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Routes>
           <Route path="/" element={<Layout><Dashboard /></Layout>} />
-          <Route path="/contracts" element={<Layout><ContractsPage /></Layout>} />
-          <Route path="/contracts/record" element={<Layout><Record /></Layout>} />
+          {/* <Route path="/contracts" element={<Layout><ContractsPage /></Layout>} /> */}
+          {/* <Route path="/contracts/record" element={<Layout><Record /></Layout>} /> */}
           <Route path="/contracts/remote" element={<Layout><RemoteSession /></Layout>} />
           <Route path="/routes" element={<RoutesPage />} />
-          <Route path="/route-planning" element={<Layout><RoutePlanningPage /></Layout>} />
-          <Route path="/locations" element={<Layout><LocationsMapPage /></Layout>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

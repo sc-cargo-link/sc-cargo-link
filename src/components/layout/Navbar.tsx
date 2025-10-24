@@ -1,14 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Package, Route, MapPin } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import { MapPin, Radio, HelpCircle } from 'lucide-react';
 
 const Navbar = () => {
   const location = useLocation();
@@ -24,39 +17,6 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    location.pathname.startsWith('/contracts') 
-                      ? 'text-neon-blue bg-space-medium' 
-                      : 'text-gray-300 hover:text-neon-blue'
-                  }`}
-                >
-                  <Package className="h-5 w-5 mr-2" />
-                  Contracts
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-space-dark border border-neon-blue/20">
-                <DropdownMenuItem asChild>
-                  <Link to="/contracts" className="text-gray-300 hover:text-neon-blue focus:text-neon-blue">
-                    All Contracts
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/contracts/record" className="text-gray-300 hover:text-neon-blue focus:text-neon-blue">
-                    Record Contract
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/contracts/remote" className="text-gray-300 hover:text-neon-blue focus:text-neon-blue">
-                    Remote Session
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
             <Link
               to="/routes"
               className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -65,31 +25,32 @@ const Navbar = () => {
                   : 'text-gray-300 hover:text-neon-blue'
               }`}
             >
-              <Route className="h-5 w-5 mr-2" />
-              Routes
+              <MapPin className="h-5 w-5 mr-2" />
+              Planning
             </Link>
             
             <Link
-              to="/route-planning"
+              to="/contracts/remote"
               className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                location.pathname === '/route-planning' 
+                location.pathname === '/contracts/remote' 
                   ? 'text-neon-blue bg-space-medium' 
                   : 'text-gray-300 hover:text-neon-blue'
               }`}
             >
-              <MapPin className="h-5 w-5 mr-2" />
-              Route Planning
+              <Radio className="h-5 w-5 mr-2" />
+              Remote
             </Link>
+            
             <Link
-              to="/locations"
+              to="/help"
               className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                location.pathname === '/locations' 
+                location.pathname === '/help' 
                   ? 'text-neon-blue bg-space-medium' 
                   : 'text-gray-300 hover:text-neon-blue'
               }`}
             >
-              <MapPin className="h-5 w-5 mr-2" />
-              Locations
+              <HelpCircle className="h-5 w-5 mr-2" />
+              Help
             </Link>
           </div>
         </div>

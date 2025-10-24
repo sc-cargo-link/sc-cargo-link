@@ -4,6 +4,7 @@ import Tesseract from 'tesseract.js';
 import { Peer } from 'peerjs';
 import { objectiveParser, rewardParser } from '@/lib/parser';
 import { findDuplicateContract, ContractData } from '@/lib/contractComparison';
+import { toast } from '@/components/ui/use-toast';
 
 function sharpenCanvas(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext('2d');
@@ -176,20 +177,39 @@ const CapturePeerHandler = forwardRef<CapturePeerHandlerRef, CapturePeerHandlerP
       ]);
       const id = nanoid(5);
       if (rewardText.data.text.trim() === '') {
+        const errorMsg = 'No text found in the reward zone';
         if (connRef.current) {
-          connRef.current.send({ type: 'error', message: 'No text found in the reward zone' });
+          connRef.current.send({ type: 'error', message: errorMsg });
         }
-        setErrorMessage('No text found in the reward zone');
+        setErrorMessage(errorMsg);
+        toast({
+          title: "Capture Error",
+          description: errorMsg,
+          variant: "destructive",
+        });
         return;
       }
       if (objectiveText.data.text.trim() === '') {
+        const errorMsg = 'No text found in the objective zone';
         if (connRef.current) {
-          connRef.current.send({ type: 'error', message: 'No text found in the objective zone' });
+          connRef.current.send({ type: 'error', message: errorMsg });
         }
-        setErrorMessage('No text found in the objective zone');
+        setErrorMessage(errorMsg);
+        toast({
+          title: "Capture Error",
+          description: errorMsg,
+          variant: "destructive",
+        });
         return;
       }
       setErrorMessage('');
+      
+      // Show success toast for successful capture
+      toast({
+        title: "Contract Captured",
+        description: `Successfully captured: ${contractNameText.data.text.trim() || 'Unnamed contract'}`,
+        duration: 3000,
+      });
       const newRecord: ContractData = { 
         id,
         timestamp: new Date().toLocaleString(),
@@ -208,6 +228,15 @@ const CapturePeerHandler = forwardRef<CapturePeerHandlerRef, CapturePeerHandlerP
           connRef.current.send({ type: 'error', message: duplicateMessage });
         }
         setErrorMessage(duplicateMessage);
+        
+        // Show toast notification for duplicate
+        toast({
+          title: "Duplicate Contract",
+          description: duplicateMessage,
+          variant: "destructive",
+          duration: 5000,
+        });
+        
         return;
       }
       
